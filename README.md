@@ -57,16 +57,16 @@ AA 01 10 20
 | 0x04 | FEEDBACK_SENSOR_MOTOR_SPEED_DATA  | 2           | 1 = 1 rpm       | Predkosc wału (enkoder)                | ESP C -> ESP B -> Webserver           |
 | 0x05 | FEEDBACK_SENSOR_MCU_TEMPERATURE   | 1           | 1 = 1 st C      | Temaratura nadajnika                   | ESP C -> ESP B -> Webserver           |
 | 0x11 | FEEDBACK_BRAKE_MOTOR_CURRENT      | 2           | 100 = 1A        | Prąd silnika hamującego (CAN)          | VESC -> STM32 -> ESP B -> Webserver   |
-| 0x12 | FEEDBACK_BRAKE_MOTOR_VOLTAGE      | 2           | 100 = 1V        | Napięcie silnika hamującego (CAN)      | ESP C -> ESP B (-> STM32 -> PC)       |
-| 0x13 | FEEDBACK_BRAKE_MOTOR_POWER        | 2           | 10 = 1W         | Moc silnika hamującego (CAN)           | ESP C -> ESP B (-> STM32 -> PC)       |
-| 0x14 | FEEDBACK_BRAKE_MOTOR_SPEED        | 2           | 1 = 1 rpm       | Predkość silnika hamującego (CAN)      | ESP C -> ESP B (-> STM32 -> PC)       |
-| 0x15 | SET_BRAKE_MOTOR_CURRENT           | 2           | 10 = 1A         | Ustawianie prądu hamowania             | ESP C -> ESP B (-> STM32 -> PC)       |
-| 0x16 | SET_BRAKE_MOTOR_TORQUE            | 2           | 100 = 1Nm       | Ustawienie momentu hamowania (PID)     | ESP C -> ESP B (-> STM32 -> PC)       |
-| 0x21 | FEEDBACK_TEST_MOTOR_CURRENT       | 2           | 100 = 1A        | Prąd silnika badanego (CAN)            | ESP C -> ESP B (-> STM32 -> PC)       |
-| 0x22 | FEEDBACK_TEST_MOTOR_VOLTAGE       | 2           | 100 = 1V        | Napięcie silnika badanego (CAN)        | ESP C -> ESP B (-> STM32 -> PC)       |
-| 0x23 | FEEDBACK_TEST_MOTOR_POWER         | 2           | 10 = 1W         | Moc silnika badanego (CAN)             | ESP C -> ESP B (-> STM32 -> PC)       |
-| 0x24 | FEEDBACK_TEST_MOTOR_SPEED         | 2           | 1 = 1 rpm       | Predkość silnika badanego (CAN)        | ESP C -> ESP B (-> STM32 -> PC)       |
-| 0x25 | CONFIG_TEST_MOTOR_CAN_ID          | 1           | 0x70 = 0x70     | Adres CAN silnika badanego             | ESP C -> ESP B (-> STM32 -> PC)       |
+| 0x12 | FEEDBACK_BRAKE_MOTOR_VOLTAGE      | 2           | 100 = 1V        | Napięcie silnika hamującego (CAN)      | VESC -> STM32 -> ESP B -> Webserver   |
+| 0x13 | FEEDBACK_BRAKE_MOTOR_POWER        | 2           | 10 = 1W         | Moc silnika hamującego (CAN)           | VESC -> STM32 -> ESP B -> Webserver   |
+| 0x14 | FEEDBACK_BRAKE_MOTOR_SPEED        | 2           | 1 = 1 rpm       | Predkość silnika hamującego (CAN)      | VESC -> STM32 -> ESP B -> Webserver   |
+| 0x15 | SET_BRAKE_MOTOR_CURRENT           | 2           | 10 = 1A         | Ustawianie prądu hamowania             | Webserver -> ESP B -> STM32 -> CAN    |
+| 0x16 | SET_BRAKE_MOTOR_TORQUE            | 2           | 100 = 1Nm       | Ustawienie momentu hamowania (PID)     | Webserver -> ESP B -> STM32 -> CAN    |
+| 0x21 | FEEDBACK_TEST_MOTOR_CURRENT       | 2           | 100 = 1A        | Prąd silnika badanego (CAN)            | VESC -> STM32 -> ESP B -> Webserver   |
+| 0x22 | FEEDBACK_TEST_MOTOR_VOLTAGE       | 2           | 100 = 1V        | Napięcie silnika badanego (CAN)        | VESC -> STM32 -> ESP B -> Webserver   |
+| 0x23 | FEEDBACK_TEST_MOTOR_POWER         | 2           | 10 = 1W         | Moc silnika badanego (CAN)             | VESC -> STM32 -> ESP B -> Webserver   |
+| 0x24 | FEEDBACK_TEST_MOTOR_SPEED         | 2           | 1 = 1 rpm       | Predkość silnika badanego (CAN)        | VESC -> STM32 -> ESP B -> Webserver   |
+| 0x25 | CONFIG_TEST_MOTOR_CAN_ID          | 1           | 0x70 = 0x70     | Adres CAN silnika badanego             | Webserver -> ESP B -> STM32           |
 
 
 `0x0X - Płytka czujnikowa`
