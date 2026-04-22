@@ -2,11 +2,10 @@
 
 ## W tym repozytorium znajduje się oprogramowanie dla systemów wbudowanych hamowni. Projekt jest kompatybilny ze sterownikami implementującymi bibliotekę libVescCan.
 
----
-
 **Projekt wykonany dla:**
-[Team Raptors PL]
+Team Raptors PL
 
+---
 
 # System Komunikacji
 
