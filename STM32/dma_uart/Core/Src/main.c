@@ -18,8 +18,6 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "stm32l0xx_hal.h"
-#include "stm32l0xx_hal_gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -45,6 +43,7 @@
 UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart5;
 DMA_HandleTypeDef hdma_usart5_rx;
+DMA_HandleTypeDef hdma_usart5_tx;
 
 /* USER CODE BEGIN PV */
 

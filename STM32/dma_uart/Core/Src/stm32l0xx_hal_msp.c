@@ -24,6 +24,8 @@
 /* USER CODE END Includes */
 extern DMA_HandleTypeDef hdma_usart5_rx;
 
+extern DMA_HandleTypeDef hdma_usart5_tx;
+
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN TD */
 
@@ -156,6 +158,26 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
 
     __HAL_LINKDMA(huart,hdmarx,hdma_usart5_rx);
 
+    /* USART5_TX Init */
+    hdma_usart5_tx.Instance = DMA1_Channel3;
+    hdma_usart5_tx.Init.Request = DMA_REQUEST_13;
+    hdma_usart5_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
+    hdma_usart5_tx.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_usart5_tx.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_usart5_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+    hdma_usart5_tx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+    hdma_usart5_tx.Init.Mode = DMA_CIRCULAR;
+    hdma_usart5_tx.Init.Priority = DMA_PRIORITY_LOW;
+    if (HAL_DMA_Init(&hdma_usart5_tx) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    __HAL_LINKDMA(huart,hdmatx,hdma_usart5_tx);
+
+    /* USART5 interrupt Init */
+    HAL_NVIC_SetPriority(USART4_5_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(USART4_5_IRQn);
     /* USER CODE BEGIN USART5_MspInit 1 */
 
     /* USER CODE END USART5_MspInit 1 */
@@ -207,6 +229,10 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
 
     /* USART5 DMA DeInit */
     HAL_DMA_DeInit(huart->hdmarx);
+    HAL_DMA_DeInit(huart->hdmatx);
+
+    /* USART5 interrupt DeInit */
+    HAL_NVIC_DisableIRQ(USART4_5_IRQn);
     /* USER CODE BEGIN USART5_MspDeInit 1 */
 
     /* USER CODE END USART5_MspDeInit 1 */

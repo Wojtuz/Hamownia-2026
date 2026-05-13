@@ -56,6 +56,8 @@
 
 /* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef hdma_usart5_rx;
+extern DMA_HandleTypeDef hdma_usart5_tx;
+extern UART_HandleTypeDef huart5;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -149,9 +151,24 @@ void DMA1_Channel2_3_IRQHandler(void)
 
   /* USER CODE END DMA1_Channel2_3_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_usart5_rx);
+  HAL_DMA_IRQHandler(&hdma_usart5_tx);
   /* USER CODE BEGIN DMA1_Channel2_3_IRQn 1 */
 
   /* USER CODE END DMA1_Channel2_3_IRQn 1 */
+}
+
+/**
+  * @brief This function handles USART4 and USART5 interrupt.
+  */
+void USART4_5_IRQHandler(void)
+{
+  /* USER CODE BEGIN USART4_5_IRQn 0 */
+
+  /* USER CODE END USART4_5_IRQn 0 */
+  HAL_UART_IRQHandler(&huart5);
+  /* USER CODE BEGIN USART4_5_IRQn 1 */
+
+  /* USER CODE END USART4_5_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */
