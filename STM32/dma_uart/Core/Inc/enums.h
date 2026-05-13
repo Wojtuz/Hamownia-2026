@@ -42,7 +42,7 @@ typedef enum
 
 } MsgID;
 
-uint8_t getMessageSize(MsgID id)
+static inline uint8_t getMessageSize(MsgID id)
 {
     switch (id)
     {
@@ -79,5 +79,11 @@ uint8_t getMessageSize(MsgID id)
     }
 }
 
+struct Message
+{
+    MsgID message_type;
+    uint8_t size;
+    uint8_t data[4];
+};
 
 #endif /* INC_ENUMS_H_ */

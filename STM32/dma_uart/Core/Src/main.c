@@ -18,11 +18,10 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "stm32l0xx_hal_uart.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "uart.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -62,7 +61,7 @@ static void MX_USART5_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+struct Message msg;
 /* USER CODE END 0 */
 
 /**
@@ -103,11 +102,22 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+    msg.message_type = FEEDBACK_SENSOR_TORQUE;
+    msg.size = 3;
+    msg.data[0] = 0x12; // Example torque value low byte
+    msg.data[1] = 0x34; // Example torque value high byte
+    msg.data[2] = 0x56; // Example torque value middle byte
+    msg.data[3] = 0x78; // Unused byte
+
+    TransmitMessageDMA(&msg);
+    HAL_Delay(10000); // Wait for a second before sending the next message
   while (1)
   {
     HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
-    HAL_Delay(1000);
-    HAL_UART_Transmit(&huart5, (uint8_t*)"Test", 4, HAL_MAX_DELAY);
+    HAL_Delay(500);
+    TransmitMessageDMA(&msg);
+
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
