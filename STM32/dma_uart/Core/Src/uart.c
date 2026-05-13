@@ -45,14 +45,35 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 
 void CreateMessage(struct Message *msg, MsgID id, uint8_t *data)
 {
-    for (uint8_t i = 0; i < 4; i++)
-    {
-        msg->data[i] = 0;
-    }
     msg->message_type = id;
     msg->size = getMessageSize(id);
     for (uint8_t i = 0; i < msg->size; i++)
     {
         msg->data[i] = data[i];
     }
+}
+
+void CreateMessage32(struct Message *msg, MsgID id, uint32_t data)
+{
+    msg->message_type = id;
+    msg->size = getMessageSize(id);
+    msg->data[0] = data & 0xFF; // Low byte
+    msg->data[1] = (data >> 8) & 0xFF; // High byte
+    msg->data[2] = (data >> 16) & 0xFF; // Middle byte
+    msg->data[3] = (data >> 24) & 0xFF; // High byte
+}
+
+void CreateMessage16(struct Message *msg, MsgID id, uint16_t data)
+{
+    msg->message_type = id;
+    msg->size = getMessageSize(id);
+    msg->data[0] = data & 0xFF; // Low byte
+    msg->data[1] = (data >> 8) & 0xFF; // High byte
+}
+
+void CreateMessage8(struct Message *msg, MsgID id, uint8_t data)
+{
+    msg->message_type = id;
+    msg->size = getMessageSize(id);
+    msg->data[0] = data;
 }

@@ -102,21 +102,19 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-    msg.message_type = FEEDBACK_SENSOR_TORQUE;
-    msg.size = 3;
-    msg.data[0] = 0x12; // Example torque value low byte
-    msg.data[1] = 0x34; // Example torque value high byte
-    msg.data[2] = 0x56; // Example torque value middle byte
-    msg.data[3] = 0x78; // Unused byte
 
-    TransmitMessageDMA(&msg);
-    HAL_Delay(10000); // Wait for a second before sending the next message
   while (1)
   {
     HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
-    HAL_Delay(500);
+    
+    HAL_Delay(1000);
+    CreateMessage16(&msg, FEEDBACK_SENSOR_TORQUE, (uint16_t)0x1234);
     TransmitMessageDMA(&msg);
-
+    
+    HAL_Delay(1000);
+    CreateMessage8(&msg, FEEDBACK_SENSOR_BATTERY_DATA, (uint8_t)0x56);
+    TransmitMessageDMA(&msg);
+    
 
     /* USER CODE END WHILE */
 
