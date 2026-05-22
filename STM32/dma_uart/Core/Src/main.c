@@ -103,17 +103,18 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
+  // CreateMessage16(&msg, FEEDBACK_SENSOR_TORQUE, (uint16_t)0x1234);
+  // TransmitMessageDMA(&msg);
+    
+  // HAL_Delay(1000);
+  // CreateMessage8(&msg, FEEDBACK_SENSOR_BATTERY_DATA, (uint8_t)0x56);
+  // TransmitMessageDMA(&msg);
+
   while (1)
   {
-    HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
-    
-    HAL_Delay(1000);
-    CreateMessage16(&msg, FEEDBACK_SENSOR_TORQUE, (uint16_t)0x1234);
-    TransmitMessageDMA(&msg);
-    
-    HAL_Delay(1000);
-    CreateMessage8(&msg, FEEDBACK_SENSOR_BATTERY_DATA, (uint8_t)0x56);
-    TransmitMessageDMA(&msg);
+    HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);  
+    HAL_Delay(300);
+
     
 
     /* USER CODE END WHILE */

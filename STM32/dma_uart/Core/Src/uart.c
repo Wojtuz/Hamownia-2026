@@ -16,8 +16,6 @@ void TransmitMessageDMA(struct Message *msg)
     {
         return; // Bufor za mały
     }
-    
-    uint8_t temp;
 
     // Przygotuj dane w buforze statycznym
     tx_buffer[0] = 0xAA; // Start byte
