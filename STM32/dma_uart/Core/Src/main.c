@@ -134,12 +134,16 @@ int main(void)
           if (rx_buffer[i+1] != 0)
           {
             msg.ID = rx_buffer[i+1];
+            rx_buffer[i+1] = 0;
             msg.size = getMessageSize(msg.ID);
           }
           for (uint8_t j = 0; j < msg.size; j++)
           {
-            msg.data[j] = rx_buffer[i+2+j];
+            uint8_t data_index = (i + 2 + j) % sizeof(rx_buffer); // Ensure we wrap around the buffer
+            msg.data[j] = rx_buffer[data_index]; //TU zczytuje syf z poza bufora (nie nakręca się)
+            rx_buffer[data_index] = 0;
           }
+          //i += 1 + msg.size; // Skip to next message
 
           HandleIncomingMessage(&msg);
         }
