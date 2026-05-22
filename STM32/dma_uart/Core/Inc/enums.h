@@ -81,7 +81,7 @@ static inline uint8_t getMessageSize(MsgID id)
 
 struct Message
 {
-    MsgID message_type;
+    MsgID ID;
     uint8_t size;
     uint8_t data[4];
 };

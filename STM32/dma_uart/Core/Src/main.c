@@ -21,7 +21,11 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "enums.h"
+#include "stm32l0xx_hal_def.h"
+#include "stm32l0xx_hal_uart.h"
 #include "uart.h"
+#include <stdint.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -62,6 +66,8 @@ static void MX_USART5_UART_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 struct Message msg;
+uint8_t rx_buffer[16];
+uint8_t last_rx_pos = 0;
 /* USER CODE END 0 */
 
 /**
@@ -104,18 +110,49 @@ int main(void)
   /* USER CODE BEGIN WHILE */
 
   // CreateMessage16(&msg, FEEDBACK_SENSOR_TORQUE, (uint16_t)0x1234);
-  // TransmitMessageDMA(&msg);
-    
-  // HAL_Delay(1000);
   // CreateMessage8(&msg, FEEDBACK_SENSOR_BATTERY_DATA, (uint8_t)0x56);
   // TransmitMessageDMA(&msg);
-
+  // 0123456789abcdef
+  // YXXXXXXXXXXXXYYY
   while (1)
   {
     HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);  
-    HAL_Delay(300);
+    HAL_UART_Receive_DMA(&huart5, rx_buffer, sizeof(rx_buffer));
+    //HAL_UART_Transmit_DMA(&huart5, rx_buffer, sizeof(rx_buffer));
+    struct Message msg;
+    uint16_t currentPos = sizeof(rx_buffer) - __HAL_DMA_GET_COUNTER(&hdma_usart5_rx);
+    if (currentPos != last_rx_pos)
+    { 
+      for(uint8_t i = last_rx_pos; i != currentPos; i++)
+      {
+        /// Will be handled automatically (buffer 255)
+        if (i == 16) i = 0;
 
-    
+        //HAL_UART_Transmit(&huart5, rx_buffer, sizeof(rx_buffer), HAL_MAX_DELAY);
+        if (rx_buffer[i] == 0xAA)
+        {
+          if (rx_buffer[i+1] != 0)
+          {
+            msg.ID = rx_buffer[i+1];
+            msg.size = getMessageSize(msg.ID);
+          }
+          for (uint8_t j = 0; j < msg.size; j++)
+          {
+            msg.data[j] = rx_buffer[i+2+j];
+          }
+
+          HandleIncomingMessage(&msg);
+        }
+        
+        rx_buffer[i] = 0;
+      }
+      
+      last_rx_pos = currentPos;
+    }
+
+    HAL_Delay(30);
+
+
 
     /* USER CODE END WHILE */
 

@@ -19,7 +19,7 @@ void TransmitMessageDMA(struct Message *msg)
 
     // Przygotuj dane w buforze statycznym
     tx_buffer[0] = 0xAA; // Start byte
-    tx_buffer[1] = msg->message_type;
+    tx_buffer[1] = msg->ID; // Message ID
     for (uint8_t i = msg->size; i > 0; i--)
     {
         tx_buffer[1 + i] = msg->data[i-1];
@@ -43,7 +43,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 
 void CreateMessage(struct Message *msg, MsgID id, uint8_t *data)
 {
-    msg->message_type = id;
+    msg->ID = id;
     msg->size = getMessageSize(id);
     for (uint8_t i = 0; i < msg->size; i++)
     {
@@ -53,7 +53,7 @@ void CreateMessage(struct Message *msg, MsgID id, uint8_t *data)
 
 void CreateMessage32(struct Message *msg, MsgID id, uint32_t data)
 {
-    msg->message_type = id;
+    msg->ID = id;
     msg->size = getMessageSize(id);
     msg->data[0] = data & 0xFF; // Low byte
     msg->data[1] = (data >> 8) & 0xFF; // High byte
@@ -63,7 +63,7 @@ void CreateMessage32(struct Message *msg, MsgID id, uint32_t data)
 
 void CreateMessage16(struct Message *msg, MsgID id, uint16_t data)
 {
-    msg->message_type = id;
+    msg->ID = id;
     msg->size = getMessageSize(id);
     msg->data[0] = data & 0xFF; // Low byte
     msg->data[1] = (data >> 8) & 0xFF; // High byte
@@ -71,7 +71,14 @@ void CreateMessage16(struct Message *msg, MsgID id, uint16_t data)
 
 void CreateMessage8(struct Message *msg, MsgID id, uint8_t data)
 {
-    msg->message_type = id;
+    msg->ID = id;
     msg->size = getMessageSize(id);
     msg->data[0] = data;
+}
+
+
+
+void HandleIncomingMessage(struct Message *msg)
+{
+    HAL_UART_Transmit(&huart5, (uint8_t *)msg, 2 + msg->size, HAL_MAX_DELAY);
 }
