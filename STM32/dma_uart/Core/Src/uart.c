@@ -1,9 +1,13 @@
 #include "uart.h"
 #include <stdint.h>
 
-#define UART_TX_BUFFER_SIZE 10
-static uint8_t tx_buffer[UART_TX_BUFFER_SIZE];
-static uint8_t is_transmitting = 0;
+uint8_t tx_buffer[UART_TX_BUFFER_SIZE];
+volatile uint8_t is_transmitting = 0;
+
+void logDebug(const char *msg, uint8_t size)
+{
+    HAL_UART_Transmit_DMA(&huart2, (uint8_t *)msg, size);
+}
 
 void TransmitMessageDMA(struct Message *msg)
 {
@@ -77,8 +81,18 @@ void CreateMessage8(struct Message *msg, MsgID id, uint8_t data)
 }
 
 
+uint8_t getBufferPosToWrite(uint8_t wannaWrite)
+{
+    return wannaWrite % UART_TX_BUFFER_SIZE;
+}
 
 void HandleIncomingMessage(struct Message *msg)
 {
+    logDebug("Received message with ID: ", 25);
+    logDebug((char *)&msg->ID, 1);
+    logDebug(" and value: ", 11);
+    logDebug((char *)msg->data, msg->size);
+    logDebug("\r\n", 2);
     HAL_UART_Transmit(&huart5, (uint8_t *)msg, 2 + msg->size, HAL_MAX_DELAY);
+
 }

@@ -66,7 +66,7 @@ static void MX_USART5_UART_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 struct Message msg;
-uint8_t rx_buffer[16];
+uint8_t rx_buffer[UART_RX_BUFFER_SIZE];
 uint8_t last_rx_pos = 0;
 /* USER CODE END 0 */
 
@@ -123,32 +123,37 @@ int main(void)
     uint16_t currentPos = sizeof(rx_buffer) - __HAL_DMA_GET_COUNTER(&hdma_usart5_rx);
     if (currentPos != last_rx_pos)
     { 
-      for(uint8_t i = last_rx_pos; i != currentPos; i++)
-      {
-        /// Will be handled automatically (buffer 255)
-        if (i == 16) i = 0;
-
+      for(uint8_t i = last_rx_pos; i != currentPos; i = getBufferPosToWrite(i + 1))
+      {        
+        HAL_UART_Transmit(&huart5, rx_buffer, sizeof(rx_buffer), HAL_MAX_DELAY);
+        HAL_Delay(10);
+        
         //HAL_UART_Transmit(&huart5, rx_buffer, sizeof(rx_buffer), HAL_MAX_DELAY);
         if (rx_buffer[i] == 0xAA)
         {
-          if (rx_buffer[i+1] != 0)
-          {
-            msg.ID = rx_buffer[i+1];
-            rx_buffer[i+1] = 0;
-            msg.size = getMessageSize(msg.ID);
-          }
+          uint8_t data_index = getBufferPosToWrite(i + 1);
+          msg.ID = rx_buffer[data_index];
+          rx_buffer[data_index] = 0;
+          msg.size = getMessageSize(msg.ID);
+          
           for (uint8_t j = 0; j < msg.size; j++)
           {
-            uint8_t data_index = (i + 2 + j) % sizeof(rx_buffer); // Ensure we wrap around the buffer
-            msg.data[j] = rx_buffer[data_index]; //TU zczytuje syf z poza bufora (nie nakręca się)
+            uint8_t data_index = getBufferPosToWrite(i + 2 + j);
+            msg.data[j] = rx_buffer[data_index];
             rx_buffer[data_index] = 0;
           }
-          //i += 1 + msg.size; // Skip to next message
 
+          rx_buffer[i] = 0;
+          i = getBufferPosToWrite(i + 1 + msg.size); // Skip to next message
           HandleIncomingMessage(&msg);
+          HAL_Delay(5);
         }
-        
-        rx_buffer[i] = 0;
+        else
+        {
+          rx_buffer[i] = 0; // Skipping bytes that are not a beginning of a message and were not cleared when message was parsed (junk probably)  
+          //logDebug("Skipped invalid byte\r\n", 22);
+          
+        }
       }
       
       last_rx_pos = currentPos;
