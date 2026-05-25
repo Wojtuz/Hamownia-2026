@@ -5,6 +5,7 @@
 
 #define UART_RX_BUFFER_SIZE 16
 #define UART_TX_BUFFER_SIZE 16
+#define UART2_TX_BUFFER_SIZE 255
 extern UART_HandleTypeDef huart5;
 extern UART_HandleTypeDef huart2;
 

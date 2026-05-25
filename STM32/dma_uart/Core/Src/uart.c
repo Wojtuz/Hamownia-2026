@@ -2,6 +2,8 @@
 #include <stdint.h>
 
 uint8_t tx_buffer[UART_TX_BUFFER_SIZE];
+uint8_t tx_buffer2[UART2_TX_BUFFER_SIZE];
+
 volatile uint8_t is_transmitting = 0;
 
 void logDebug(const char *msg, uint8_t size)
@@ -89,10 +91,11 @@ uint8_t getBufferPosToWrite(uint8_t wannaWrite)
 void HandleIncomingMessage(struct Message *msg)
 {
     logDebug("Received message with ID: ", 25);
-    logDebug((char *)&msg->ID, 1);
-    logDebug(" and value: ", 11);
-    logDebug((char *)msg->data, msg->size);
-    logDebug("\r\n", 2);
-    HAL_UART_Transmit(&huart5, (uint8_t *)msg, 2 + msg->size, HAL_MAX_DELAY);
+    // logDebug((char *)&msg->ID, 1);
+    // logDebug(" and value: ", 11);
+    // logDebug((char *)msg->data, msg->size);
+    // logDebug("\r\n", 2);
+    //HAL_UART_Transmit(&huart2, (uint8_t *)msg, 2 + msg->size, HAL_MAX_DELAY);
+    TransmitMessageDMA(msg);
 
 }
