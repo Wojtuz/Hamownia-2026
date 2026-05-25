@@ -72,7 +72,7 @@ AA 01 10 20
 
 ## Wiadomości protokołu
 
-| ID   | Nazwa                            | Rozmiar (B) | Skala / Jednostki | Opis                                | Kierunek                          |
+| ID   | Nazwa                            | Rozmiar (B) | Skala             | Opis                                | Kierunek                          |
 | ---- | -------------------------------- | ----------- | ----------------- | ----------------------------------- | --------------------------------- |
 | 0x01 | FEEDBACK_SENSOR_TORQUE           | 2           | 100 = 1 Nm        | Moment hamowania (PID / wykresy)    | ESP C -> ESP B -> (Web & STM32)   |
 | 0x02 | FEEDBACK_SENSOR_BATTERY_DATA     | 1           | 255 = 5 V         | Poziom baterii                      | ESP C -> ESP B -> Web             |
