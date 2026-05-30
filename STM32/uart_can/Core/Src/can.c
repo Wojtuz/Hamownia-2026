@@ -1,0 +1,58 @@
+#include "can.h"
+#include "stm32g4xx_hal_fdcan.h"
+
+extern FDCAN_HandleTypeDef hfdcan1;
+FDCAN_TxHeaderTypeDef TxHeader;
+uint8_t TxData[8] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08};
+
+void FDCAN_Config(FDCAN_HandleTypeDef *hfdcan)
+{
+	FDCAN_FilterTypeDef sFilterConfig;
+
+	/* Configure Rx filter */
+	sFilterConfig.IdType = FDCAN_EXTENDED_ID;
+	sFilterConfig.FilterIndex = 0;
+	sFilterConfig.FilterType = FDCAN_FILTER_MASK;
+	sFilterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
+
+	sFilterConfig.FilterID1 = 0x80;			/* assign VESC ID here */
+	sFilterConfig.FilterID2 = 0x1FFF00FF;
+
+	if (HAL_FDCAN_ConfigFilter(hfdcan, &sFilterConfig) != HAL_OK) {
+		Error_Handler();
+	}
+
+	/* Configure global filter:
+	 Filter all remote frames with STD and EXT ID
+	 Reject non matching frames with STD ID and EXT ID */
+	if (HAL_FDCAN_ConfigGlobalFilter(hfdcan, FDCAN_REJECT, FDCAN_REJECT, FDCAN_FILTER_REMOTE, FDCAN_FILTER_REMOTE) != HAL_OK) {
+		Error_Handler();
+	}
+
+	/* Start the FDCAN module */
+	if (HAL_FDCAN_Start(hfdcan) != HAL_OK) {
+		Error_Handler();
+	}
+
+	if (HAL_FDCAN_ActivateNotification(hfdcan, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0) != HAL_OK) {
+		Error_Handler();
+	}
+}
+
+void CAN_tx()
+{
+    /* Prepare Tx header (standard 11-bit ID, 8 bytes) */
+    TxHeader.Identifier = 0x067;
+    TxHeader.IdType = FDCAN_STANDARD_ID;
+    TxHeader.TxFrameType = FDCAN_DATA_FRAME;
+    TxHeader.DataLength = FDCAN_DLC_BYTES_8;
+    TxHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
+    TxHeader.BitRateSwitch = FDCAN_BRS_OFF;
+    TxHeader.FDFormat = FDCAN_CLASSIC_CAN;
+    TxHeader.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
+    TxHeader.MessageMarker = 0;
+
+    if (HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &TxHeader, TxData) != HAL_OK) {
+      //HAL_UART_Transmit(&huart1, (uint8_t *)"CAN TX ERR\r\n", 12, HAL_MAX_DELAY);
+    }
+}
