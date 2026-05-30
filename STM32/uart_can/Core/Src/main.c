@@ -18,8 +18,12 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "stm32g4xx_hal_fdcan.h"
 #include "stm32g4xx_hal_gpio.h"
 #include "stm32g4xx_hal_uart.h"
+#include <stdio.h>
+#include <string.h>
+#include "can.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -121,15 +125,34 @@ int main(void)
   MX_ADC1_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-
+  FDCAN_Config(&hfdcan1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  FDCAN_TxHeaderTypeDef TxHeader;
+  uint8_t TxData[8] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08};
+
   while (1)
   {
     HAL_GPIO_TogglePin(LED_B_GPIO_Port, LED_B_Pin);
-    HAL_UART_Transmit(&huart1, "DUPA!\r", 15, HAL_MAX_DELAY);
+    /* simple status over UART */
+    HAL_UART_Transmit(&huart1, (uint8_t *)"LOOP\r\n", 6, HAL_MAX_DELAY);
+
+    /* Prepare Tx header (standard 11-bit ID, 8 bytes) */
+    TxHeader.Identifier = 0x123;
+    TxHeader.IdType = FDCAN_STANDARD_ID;
+    TxHeader.TxFrameType = FDCAN_DATA_FRAME;
+    TxHeader.DataLength = FDCAN_DLC_BYTES_8;
+    TxHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
+    TxHeader.BitRateSwitch = FDCAN_BRS_OFF;
+    TxHeader.FDFormat = FDCAN_CLASSIC_CAN;
+    TxHeader.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
+    TxHeader.MessageMarker = 0;
+
+    if (HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &TxHeader, TxData) != HAL_OK) {
+      HAL_UART_Transmit(&huart1, (uint8_t *)"CAN TX ERR\r\n", 12, HAL_MAX_DELAY);
+    }
     HAL_Delay(100);
 
     /* USER CODE END WHILE */
@@ -659,6 +682,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
 
 /* USER CODE END 4 */
 
