@@ -1,4 +1,9 @@
 #include "can.h"
+#include "stm32g4xx_hal_fdcan.h"
+
+extern FDCAN_HandleTypeDef hfdcan1;
+FDCAN_TxHeaderTypeDef TxHeader;
+uint8_t TxData[8] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08};
 
 void FDCAN_Config(FDCAN_HandleTypeDef *hfdcan)
 {
@@ -34,3 +39,20 @@ void FDCAN_Config(FDCAN_HandleTypeDef *hfdcan)
 	}
 }
 
+void CAN_tx()
+{
+    /* Prepare Tx header (standard 11-bit ID, 8 bytes) */
+    TxHeader.Identifier = 0x067;
+    TxHeader.IdType = FDCAN_STANDARD_ID;
+    TxHeader.TxFrameType = FDCAN_DATA_FRAME;
+    TxHeader.DataLength = FDCAN_DLC_BYTES_8;
+    TxHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
+    TxHeader.BitRateSwitch = FDCAN_BRS_OFF;
+    TxHeader.FDFormat = FDCAN_CLASSIC_CAN;
+    TxHeader.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
+    TxHeader.MessageMarker = 0;
+
+    if (HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &TxHeader, TxData) != HAL_OK) {
+      //HAL_UART_Transmit(&huart1, (uint8_t *)"CAN TX ERR\r\n", 12, HAL_MAX_DELAY);
+    }
+}
