@@ -1,0 +1,3 @@
+[submodule "STM32/uart_can/libVescCan"]
+	path = STM32/uart_can/libVescCan
+	url = https://github.com/AlvaroBajceps/libVescCan.git
