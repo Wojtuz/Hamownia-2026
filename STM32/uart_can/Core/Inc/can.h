@@ -4,6 +4,6 @@
 #include "main.h"
 
 void FDCAN_Config(FDCAN_HandleTypeDef *hfdcan);
-void CAN_tx();
+void TransmitOverCan(FDCAN_HandleTypeDef *hfdcan, uint32_t id, uint8_t *data, uint8_t len);
 
 #endif /* INC_CAN_H_ */

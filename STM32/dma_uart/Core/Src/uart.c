@@ -5,9 +5,16 @@ uint8_t tx_buffer[UART_TX_BUFFER_SIZE];
 uint8_t tx_buffer2[UART2_TX_BUFFER_SIZE];
 
 volatile uint8_t is_transmitting = 0;
+volatile uint8_t is_transmitting2 = 0;
 
 void logDebug(const char *msg, uint8_t size)
 {
+    while (is_transmitting2); // Czekaj, aż poprzedni transfer się skończy
+    for (uint8_t i = 0; i < size; i++)
+    {
+        tx_buffer2[i] = msg[i];
+    }
+    is_transmitting2 = 1;
     HAL_UART_Transmit_DMA(&huart2, (uint8_t *)msg, size);
 }
 
@@ -44,6 +51,10 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
     if (huart->Instance == USART5)
     {
         is_transmitting = 0; // Transmisja zakończona
+    }
+    if (huart->Instance == USART2)
+    {
+        is_transmitting2 = 0; // Transmisja zakończona
     }
 }
 
@@ -91,11 +102,10 @@ uint8_t getBufferPosToWrite(uint8_t wannaWrite)
 void HandleIncomingMessage(struct Message *msg)
 {
     logDebug("Received message with ID: ", 25);
-    // logDebug((char *)&msg->ID, 1);
-    // logDebug(" and value: ", 11);
-    // logDebug((char *)msg->data, msg->size);
-    // logDebug("\r\n", 2);
-    //HAL_UART_Transmit(&huart2, (uint8_t *)msg, 2 + msg->size, HAL_MAX_DELAY);
+    logDebug((char *)&msg->ID, 1);
+    logDebug(" and value: ", 11);
+    logDebug((char *)msg->data, msg->size);
+    logDebug("\r\n", 2);
     TransmitMessageDMA(msg);
 
 }

@@ -131,12 +131,13 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   
+  uint8_t TxData[8] = {0xDE, 0xAD, 0xBE, 0xEF, 0x00, 0x00, 0x00, 0x00};
 
   while (1)
   {
     HAL_GPIO_TogglePin(LED_B_GPIO_Port, LED_B_Pin);
     HAL_UART_Transmit(&huart1, (uint8_t *)"LOOP\r\n", 6, HAL_MAX_DELAY);
-    CAN_tx();
+    TransmitOverCan(&hfdcan1, 0x80, TxData, 8);
     
     HAL_Delay(100);
 
@@ -667,8 +668,21 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
+{
+  if ((RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE) != RESET) {
+    FDCAN_RxHeaderTypeDef RxHeader;
+    uint8_t RxData[8];
 
+    /* Retrieve Rx messages from RX FIFO0 */
+    if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &RxHeader, RxData) != HAL_OK) {
+      Error_Handler();
+      return;
+    }
 
+    HAL_GPIO_TogglePin(LED_B_GPIO_Port, LED_B_Pin);
+  }
+}
 /* USER CODE END 4 */
 
 /**
