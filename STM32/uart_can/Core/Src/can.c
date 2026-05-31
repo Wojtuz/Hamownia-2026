@@ -1,6 +1,7 @@
 #include "can.h"
+#include "libVescCan/VESC_Convert.h"
 #include "stm32g4xx_hal_fdcan.h"
-#include <libVescCan/VESC.h>
+#include "vesc2halcan.h"
 
 FDCAN_TxHeaderTypeDef TxHeader;
 uint8_t TxData[8] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08};
@@ -57,4 +58,24 @@ void TransmitOverCan(FDCAN_HandleTypeDef *hfdcan, uint32_t id, uint8_t *data, ui
 	if (HAL_FDCAN_AddMessageToTxFifoQ(hfdcan, &TxHeader, data) != HAL_OK) {
 		// Handle transmission error
 	}
+}
+
+void TransmitVescCommand(FDCAN_HandleTypeDef *hfdcan, VESC_Id_t vescID, VESC_Command_t command, float value)
+{
+	// uint32_t id = ((uint32_t)vescID & 0xFF) | (((uint32_t)command & 0xFF) << 8);
+
+	VESC_CommandFrame cmd;
+	VESC_RawFrame rawFrame;
+
+	cmd.vescID = vescID;
+	cmd.command = command;
+	cmd.commandData = value;
+
+	VESC_ZeroMemory(&rawFrame, sizeof(rawFrame));
+	VESC_ZeroMemory(&TxHeader, sizeof(TxHeader));
+	VESC_ZeroMemory(TxData, sizeof(TxData));
+
+	VESC_convertCmdToRaw(&rawFrame, &cmd);
+	vesc2halcan(&TxHeader, TxData, sizeof(TxData), &rawFrame);
+	HAL_FDCAN_AddMessageToTxFifoQ(hfdcan, &TxHeader, TxData);
 }
