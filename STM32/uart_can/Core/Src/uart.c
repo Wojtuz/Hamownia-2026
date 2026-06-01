@@ -7,18 +7,18 @@ uint8_t tx_buffer2[UART2_TX_BUFFER_SIZE];
 volatile uint8_t is_transmitting = 0;
 volatile uint8_t is_transmitting2 = 0;
 
-void logDebug(const char *msg, uint8_t size)
-{
-    while (is_transmitting2); // Czekaj, aż poprzedni transfer się skończy
-    for (uint8_t i = 0; i < size; i++)
-    {
-        tx_buffer2[i] = msg[i];
-    }
-    is_transmitting2 = 1;
-    HAL_UART_Transmit_DMA(&huart2, (uint8_t *)msg, size);
-}
+// void logDebug(const char *msg, uint8_t size)
+// {
+//     while (is_transmitting2); // Czekaj, aż poprzedni transfer się skończy
+//     for (uint8_t i = 0; i < size; i++)
+//     {
+//         tx_buffer2[i] = msg[i];
+//     }
+//     is_transmitting2 = 1;
+//     HAL_UART_Transmit_DMA(&huart2, (uint8_t *)msg, size);
+// }
 
-void TransmitMessageDMA(struct Message *msg)
+void TransmitMessageDMA(UART_HandleTypeDef *huart, struct Message *msg)
 {
     // Czekaj, aż poprzedni transfer się skończy
     while (is_transmitting);
@@ -42,7 +42,7 @@ void TransmitMessageDMA(struct Message *msg)
     is_transmitting = 1;
     
     // Wyślij przez DMA
-    HAL_UART_Transmit_DMA(&huart5, tx_buffer, total_size);
+    HAL_UART_Transmit_DMA(huart, tx_buffer, total_size);
 }
 
 // Callback wywoływany po zakończeniu transmisji DMA
