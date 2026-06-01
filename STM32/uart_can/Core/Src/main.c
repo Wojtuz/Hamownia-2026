@@ -66,6 +66,7 @@ DMA_HandleTypeDef hdma_usart1_tx;
 
 /* USER CODE BEGIN PV */
 uint8_t TxData[8];
+uint8_t rx_buffer[UART_RX_BUFFER_SIZE];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -133,20 +134,23 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  struct Message msg;
+  msg.ID = FEEDBACK_SENSOR_TORQUE;
+  msg.size = 2;
+  msg.data[0] = 0x12;
+  msg.data[1] = 0x34;
+
+  
 
   while (1)
   {
     HAL_GPIO_TogglePin(LED_B_GPIO_Port, LED_B_Pin);
     TransmitVescCommand(&hfdcan1, 0x67, VESC_COMMAND_SET_CURRENT, 3.0f);
     TransmitVescCommand(&hfdcan1, 0x68, VESC_COMMAND_SET_CURRENT_BRAKE, 12.0f);
-    struct Message msg;
-    msg.ID = FEEDBACK_SENSOR_TORQUE;
-    msg.size = 2;
-    msg.data[0] = 0x34;
-    msg.data[1] = 0x12;
-
+    
     UART_TransmitMessageDMA(&huart1, &msg);
-    HAL_Delay(100);
+    UART_ProcessRxDmaBuffer(&huart1, &hdma_usart1_rx, rx_buffer, UART_RX_BUFFER_SIZE, &last_rx_pos);
+    HAL_Delay(500);
 
     /* USER CODE END WHILE */
 
