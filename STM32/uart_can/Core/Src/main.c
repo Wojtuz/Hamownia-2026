@@ -679,6 +679,8 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
       return;
     }
 
+    RxHeader.Identifier; // Process the received message ID
+
     HAL_GPIO_TogglePin(LED_B_GPIO_Port, LED_B_Pin);
   }
 }

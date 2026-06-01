@@ -3,9 +3,6 @@
 #include "stm32g4xx_hal_fdcan.h"
 #include "vesc2halcan.h"
 
-FDCAN_TxHeaderTypeDef TxHeader;
-uint8_t TxData[8] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08};
-
 void FDCAN_Config(FDCAN_HandleTypeDef *hfdcan)
 {
 	FDCAN_FilterTypeDef sFilterConfig;
@@ -16,8 +13,8 @@ void FDCAN_Config(FDCAN_HandleTypeDef *hfdcan)
 	sFilterConfig.FilterType = FDCAN_FILTER_MASK;
 	sFilterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
 
-	sFilterConfig.FilterID1 = 0x80;			/* assign VESC ID here */
-	sFilterConfig.FilterID2 = 0x1FFF00FF;
+	sFilterConfig.FilterID1 = 0xFF;			
+	sFilterConfig.FilterID2 = 0x1FFF0000;
 
 	if (HAL_FDCAN_ConfigFilter(hfdcan, &sFilterConfig) != HAL_OK) {
 		Error_Handler();
@@ -43,7 +40,6 @@ void FDCAN_Config(FDCAN_HandleTypeDef *hfdcan)
 void TransmitOverCan(FDCAN_HandleTypeDef *hfdcan, uint32_t id, uint8_t *data, uint8_t len)
 {
 	FDCAN_TxHeaderTypeDef TxHeader;
-
 	/* Prepare Tx header */
 	TxHeader.Identifier = id;
 	TxHeader.IdType = FDCAN_EXTENDED_ID;
@@ -64,6 +60,8 @@ void TransmitVescCommand(FDCAN_HandleTypeDef *hfdcan, VESC_Id_t vescID, VESC_Com
 {
 	// uint32_t id = ((uint32_t)vescID & 0xFF) | (((uint32_t)command & 0xFF) << 8);
 
+	FDCAN_TxHeaderTypeDef TxHeader;
+	uint8_t TxData[8];
 	VESC_CommandFrame cmd;
 	VESC_RawFrame rawFrame;
 
