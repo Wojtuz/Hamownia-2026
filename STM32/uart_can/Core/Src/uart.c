@@ -111,13 +111,111 @@ void UART_HandleIncomingMessage(UART_HandleTypeDef *logHuart, struct Message *ms
 {
     switch (msg->ID)
     {
+        /* =========================
+         * SENSOR FEEDBACK
+         * ========================= */
         case FEEDBACK_SENSOR_TORQUE:
-            /// TODO: update "current torque" variable and process regulator
+        {
+            int16_t torque = (int16_t)((msg->data[0] << 8) | msg->data[1]);
+
+            // TODO: scale if needed (np. /100)
+            // float torque_Nm = torque / 100.0f;
+
+            // update control loop input
+            //UpdateTorqueFeedback(torque);
+
             HAL_GPIO_TogglePin(LED_R_GPIO_Port, LED_R_Pin);
             break;
-        
-        default:
+        }
 
+        /* =========================
+         * BRAKE MOTOR SETPOINTS
+         * ========================= */
+        case SET_BRAKE_MOTOR_BRAKE_CURRENT:
+        {
+            int16_t current = (int16_t)((msg->data[0] << 8) | msg->data[1]);
+            //SetBrakeMotorCurrent(current);
+            break;
+        }
+
+        case SET_BRAKE_MOTOR_BRAKE_TORQUE:
+        {
+            int16_t torque = (int16_t)((msg->data[0] << 8) | msg->data[1]);
+            //SetBrakeMotorTorque(torque);
+            break;
+        }
+
+        case SET_BRAKE_MOTOR_DRIVE_CURRENT:
+        {
+            int16_t current = (int16_t)((msg->data[0] << 8) | msg->data[1]);
+            //SetBrakeMotorDriveCurrent(current);
+            break;
+        }
+
+        case SET_BRAKE_MOTOR_SPEED:
+        {
+            int16_t rpm = (int16_t)((msg->data[0] << 8) | msg->data[1]);
+            //SetBrakeMotorSpeed(rpm);
+            break;
+        }
+
+        case SET_BRAKE_MOTOR_DUTY:
+        {
+            uint8_t duty = msg->data[0];
+            //SetBrakeMotorDuty(duty);
+            break;
+        }
+
+        /* =========================
+         * TEST MOTOR SETPOINTS
+         * ========================= */
+        case SET_TEST_MOTOR_BRAKE_CURRENT:
+        {
+            int16_t current = (int16_t)((msg->data[0] << 8) | msg->data[1]);
+            //SetTestMotorBrakeCurrent(current);
+            break;
+        }
+
+        case SET_TEST_MOTOR_BRAKE_TORQUE:
+        {
+            int16_t torque = (int16_t)((msg->data[0] << 8) | msg->data[1]);
+            //SetTestMotorBrakeTorque(torque);
+            break;
+        }
+
+        case SET_TEST_MOTOR_DRIVE_CURRENT:
+        {
+            int16_t current = (int16_t)((msg->data[0] << 8) | msg->data[1]);
+            //SetTestMotorDriveCurrent(current);
+            break;
+        }
+
+        case SET_TEST_MOTOR_SPEED:
+        {
+            int16_t rpm = (int16_t)((msg->data[0] << 8) | msg->data[1]);
+            //SetTestMotorSpeed(rpm);
+            break;
+        }
+
+        /* =========================
+         * CONFIG
+         * ========================= */
+        case CONFIG_TEST_MOTOR_FRAMES:
+        {
+            uint16_t mask = (msg->data[0] << 8) | msg->data[1];
+            //SetTestMotorFrameMask(mask);
+            break;
+        }
+
+        case CONFIG_TEST_MOTOR_CAN_ID:
+        {
+            uint8_t can_id = msg->data[0];
+            //SetTestMotorCANId(can_id);
+            break;
+        }
+
+        default:
+            // unknown frame
             break;
     }
 }

@@ -27,8 +27,7 @@
 #include "stm32g4xx_hal_uart.h"
 #include <stdio.h>
 #include <string.h>
-#include "can.h"
-#include "uart.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

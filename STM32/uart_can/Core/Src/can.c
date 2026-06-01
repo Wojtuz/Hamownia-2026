@@ -1,7 +1,5 @@
 #include "can.h"
-#include "libVescCan/VESC_Convert.h"
 #include "stm32g4xx_hal_fdcan.h"
-#include "vesc2halcan.h"
 
 void FDCAN_Config(FDCAN_HandleTypeDef *hfdcan)
 {
