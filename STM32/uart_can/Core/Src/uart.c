@@ -4,6 +4,9 @@
 uint8_t tx_buffer[UART_TX_BUFFER_SIZE];
 uint8_t tx_buffer2[UART2_TX_BUFFER_SIZE];
 
+uint16_t last_rx_pos = 0;
+uint8_t rx_buffer[UART_RX_BUFFER_SIZE] = {0};
+
 volatile uint8_t is_transmitting = 0;
 volatile uint8_t is_transmitting2 = 0;
 
@@ -14,12 +17,12 @@ static uint16_t getBufferPos(uint16_t position, uint16_t buffer_size)
 
 void UART_logDebug(UART_HandleTypeDef *huart, const char *msg, uint8_t size)
 {
-    while (is_transmitting2); // Czekaj, aż poprzedni transfer się skończy
+    while (is_transmitting); // Czekaj, aż poprzedni transfer się skończy
     for (uint8_t i = 0; i < size; i++)
     {
         tx_buffer2[i] = msg[i];
     }
-    is_transmitting2 = 1;
+    is_transmitting = 1;
     HAL_UART_Transmit_DMA(huart, (uint8_t *)msg, size);
 }
 
@@ -114,40 +117,37 @@ void UART_HandleIncomingMessage(UART_HandleTypeDef *logHuart, struct Message *ms
     UART_TransmitMessageDMA(logHuart, msg);
 }
 
-void UART_ProcessRxDmaBuffer(UART_HandleTypeDef *huart, DMA_HandleTypeDef *hdma_rx, uint8_t *rx_buffer, uint16_t rx_buffer_size, uint16_t *last_rx_pos)
+void UART_ProcessRxDmaBuffer(UART_HandleTypeDef *huart, DMA_HandleTypeDef *hdma_rx)
 {
-    if ((huart == NULL) || (hdma_rx == NULL) || (rx_buffer == NULL) || (last_rx_pos == NULL) || (rx_buffer_size == 0U))
-    {
-        return;
-    }
+    HAL_UART_Receive_DMA(huart, rx_buffer, UART_RX_BUFFER_SIZE);
 
     struct Message msg;
-    uint16_t currentPos = rx_buffer_size - __HAL_DMA_GET_COUNTER(hdma_rx);
-    currentPos = getBufferPos(currentPos, rx_buffer_size);
+    uint16_t currentPos = UART_RX_BUFFER_SIZE - __HAL_DMA_GET_COUNTER(hdma_rx);
+    currentPos = getBufferPos(currentPos, UART_RX_BUFFER_SIZE);
 
-    if (currentPos != *last_rx_pos)
+    if (currentPos != last_rx_pos)
     {
-        for (uint16_t i = *last_rx_pos; i != currentPos; i = getBufferPos(i + 1U, rx_buffer_size))
+        for (uint16_t i = last_rx_pos; i != currentPos; i = getBufferPos(i + 1U, UART_RX_BUFFER_SIZE))
         {
-            HAL_UART_Transmit(huart, rx_buffer, rx_buffer_size, HAL_MAX_DELAY);
+            HAL_UART_Transmit(huart, rx_buffer, UART_RX_BUFFER_SIZE, HAL_MAX_DELAY);
             //HAL_Delay(10);
 
             if (rx_buffer[i] == 0xAA)
             {
-                uint16_t data_index = getBufferPos(i + 1U, rx_buffer_size);
+                uint16_t data_index = getBufferPos(i + 1U, UART_RX_BUFFER_SIZE);
                 msg.ID = rx_buffer[data_index];
                 rx_buffer[data_index] = 0;
                 msg.size = getMessageSize(msg.ID);
 
                 for (uint8_t j = 0; j < msg.size; j++)
                 {
-                    data_index = getBufferPos(i + 2U + j, rx_buffer_size);
+                    data_index = getBufferPos(i + 2U + j, UART_RX_BUFFER_SIZE);
                     msg.data[j] = rx_buffer[data_index];
                     rx_buffer[data_index] = 0;
                 }
 
                 rx_buffer[i] = 0;
-                i = getBufferPos(i + 1U + msg.size, rx_buffer_size);
+                i = getBufferPos(i + 1U + msg.size, UART_RX_BUFFER_SIZE);
                 UART_HandleIncomingMessage(huart, &msg);
                 //HAL_Delay(5);
                 HAL_UART_Transmit(huart, (uint8_t *)"\n", 1, HAL_MAX_DELAY);    
@@ -158,6 +158,6 @@ void UART_ProcessRxDmaBuffer(UART_HandleTypeDef *huart, DMA_HandleTypeDef *hdma_
             }
         }
 
-        *last_rx_pos = currentPos;
+        last_rx_pos = currentPos;
     }
 }

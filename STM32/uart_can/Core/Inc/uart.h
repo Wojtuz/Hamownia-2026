@@ -19,4 +19,4 @@ void UART_CreateMessage32(struct Message *msg, MsgID id, uint32_t data);
 /// Message receive callback
 uint8_t getBufferPosToWrite(uint8_t wannaWrite);
 void UART_HandleIncomingMessage(UART_HandleTypeDef *logHuart, struct Message *msg);
-void UART_ProcessRxDmaBuffer(UART_HandleTypeDef *huart, DMA_HandleTypeDef *hdma_rx, uint8_t *rx_buffer, uint16_t rx_buffer_size, uint16_t *last_rx_pos);
+void UART_ProcessRxDmaBuffer(UART_HandleTypeDef *huart, DMA_HandleTypeDef *hdma_rx);

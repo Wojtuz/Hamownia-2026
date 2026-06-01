@@ -66,7 +66,6 @@ DMA_HandleTypeDef hdma_usart1_tx;
 
 /* USER CODE BEGIN PV */
 uint8_t TxData[8];
-uint8_t rx_buffer[UART_RX_BUFFER_SIZE];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -145,11 +144,11 @@ int main(void)
   while (1)
   {
     HAL_GPIO_TogglePin(LED_B_GPIO_Port, LED_B_Pin);
-    TransmitVescCommand(&hfdcan1, 0x67, VESC_COMMAND_SET_CURRENT, 3.0f);
-    TransmitVescCommand(&hfdcan1, 0x68, VESC_COMMAND_SET_CURRENT_BRAKE, 12.0f);
+    CAN_TransmitVescCommand(&hfdcan1, 0x67, VESC_COMMAND_SET_CURRENT, 3.0f);
+    CAN_TransmitVescCommand(&hfdcan1, 0x68, VESC_COMMAND_SET_CURRENT_BRAKE, 12.0f);
     
     UART_TransmitMessageDMA(&huart1, &msg);
-    UART_ProcessRxDmaBuffer(&huart1, &hdma_usart1_rx, rx_buffer, UART_RX_BUFFER_SIZE, &last_rx_pos);
+    UART_ProcessRxDmaBuffer(&huart1, &hdma_usart1_rx);
     HAL_Delay(500);
 
     /* USER CODE END WHILE */

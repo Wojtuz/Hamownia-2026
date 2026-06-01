@@ -37,7 +37,7 @@ void FDCAN_Config(FDCAN_HandleTypeDef *hfdcan)
 	}
 }
 
-void TransmitOverCan(FDCAN_HandleTypeDef *hfdcan, uint32_t id, uint8_t *data, uint8_t len)
+void CAN_TransmitOverCan(FDCAN_HandleTypeDef *hfdcan, uint32_t id, uint8_t *data, uint8_t len)
 {
 	FDCAN_TxHeaderTypeDef TxHeader;
 	/* Prepare Tx header */
@@ -56,7 +56,7 @@ void TransmitOverCan(FDCAN_HandleTypeDef *hfdcan, uint32_t id, uint8_t *data, ui
 	}
 }
 
-void TransmitVescCommand(FDCAN_HandleTypeDef *hfdcan, VESC_Id_t vescID, VESC_Command_t command, float value)
+void CAN_TransmitVescCommand(FDCAN_HandleTypeDef *hfdcan, VESC_Id_t vescID, VESC_Command_t command, float value)
 {
 	// uint32_t id = ((uint32_t)vescID & 0xFF) | (((uint32_t)command & 0xFF) << 8);
 
