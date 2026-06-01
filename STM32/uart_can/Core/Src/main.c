@@ -137,9 +137,15 @@ int main(void)
   while (1)
   {
     HAL_GPIO_TogglePin(LED_B_GPIO_Port, LED_B_Pin);
-    HAL_UART_Transmit(&huart1, (uint8_t *)"LOOP\r\n", 6, HAL_MAX_DELAY);
     TransmitVescCommand(&hfdcan1, 0x67, VESC_COMMAND_SET_CURRENT, 3.0f);
     TransmitVescCommand(&hfdcan1, 0x68, VESC_COMMAND_SET_CURRENT_BRAKE, 12.0f);
+    struct Message msg;
+    msg.ID = FEEDBACK_SENSOR_TORQUE;
+    msg.size = 2;
+    msg.data[0] = 0x34;
+    msg.data[1] = 0x12;
+
+    UART_TransmitMessageDMA(&huart1, &msg);
     HAL_Delay(100);
 
     /* USER CODE END WHILE */
