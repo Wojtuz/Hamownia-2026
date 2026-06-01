@@ -109,18 +109,26 @@ uint8_t getBufferPosToWrite(uint8_t wannaWrite)
 
 void UART_HandleIncomingMessage(UART_HandleTypeDef *logHuart, struct Message *msg)
 {
-    UART_logDebug(logHuart, "Received message with ID: ", 25);
-    UART_logDebug(logHuart, (char *)&msg->ID, 1);
-    UART_logDebug(logHuart, " and value: ", 11);
-    UART_logDebug(logHuart, (char *)msg->data, msg->size);
-    UART_logDebug(logHuart, "\r\n", 2);
-    UART_TransmitMessageDMA(logHuart, msg);
+    switch (msg->ID)
+    {
+        case FEEDBACK_SENSOR_TORQUE:
+            /// TODO: update "current torque" variable and process regulator
+            HAL_GPIO_TogglePin(LED_R_GPIO_Port, LED_R_Pin);
+            break;
+        
+        default:
+
+            break;
+    }
+}
+
+void UART_StartReceiveDMA(UART_HandleTypeDef *huart, DMA_HandleTypeDef *hdma_rx)
+{
+    HAL_UART_Receive_DMA(huart, rx_buffer, UART_RX_BUFFER_SIZE);
 }
 
 void UART_ProcessRxDmaBuffer(UART_HandleTypeDef *huart, DMA_HandleTypeDef *hdma_rx)
 {
-    HAL_UART_Receive_DMA(huart, rx_buffer, UART_RX_BUFFER_SIZE);
-
     struct Message msg;
     uint16_t currentPos = UART_RX_BUFFER_SIZE - __HAL_DMA_GET_COUNTER(hdma_rx);
     currentPos = getBufferPos(currentPos, UART_RX_BUFFER_SIZE);

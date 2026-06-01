@@ -65,7 +65,7 @@ DMA_HandleTypeDef hdma_usart1_rx;
 DMA_HandleTypeDef hdma_usart1_tx;
 
 /* USER CODE BEGIN PV */
-uint8_t TxData[8];
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -129,23 +129,26 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   FDCAN_Config(&hfdcan1);
-  /* USER CODE END 2 */
-
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
+  UART_StartReceiveDMA(&huart1, &hdma_usart1_rx);
+  
   struct Message msg;
   msg.ID = FEEDBACK_SENSOR_TORQUE;
   msg.size = 2;
   msg.data[0] = 0x12;
   msg.data[1] = 0x34;
 
-  
+
+  /* USER CODE END 2 */
+
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
+
 
   while (1)
   {
     HAL_GPIO_TogglePin(LED_B_GPIO_Port, LED_B_Pin);
-    CAN_TransmitVescCommand(&hfdcan1, 0x67, VESC_COMMAND_SET_CURRENT, 3.0f);
-    CAN_TransmitVescCommand(&hfdcan1, 0x68, VESC_COMMAND_SET_CURRENT_BRAKE, 12.0f);
+    // CAN_TransmitVescCommand(&hfdcan1, 0x67, VESC_COMMAND_SET_CURRENT, 3.0f);
+    // CAN_TransmitVescCommand(&hfdcan1, 0x68, VESC_COMMAND_SET_CURRENT_BRAKE, 12.0f);
     
     UART_TransmitMessageDMA(&huart1, &msg);
     UART_ProcessRxDmaBuffer(&huart1, &hdma_usart1_rx);
