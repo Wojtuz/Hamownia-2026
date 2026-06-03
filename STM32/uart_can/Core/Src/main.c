@@ -21,10 +21,12 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "can.h"
 #include "libVescCan/VESC_Consts.h"
 #include "stm32g4xx_hal_fdcan.h"
 #include "stm32g4xx_hal_gpio.h"
 #include "stm32g4xx_hal_uart.h"
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -147,10 +149,17 @@ int main(void)
   {
     HAL_GPIO_TogglePin(LED_B_GPIO_Port, LED_B_Pin);
     // CAN_TransmitVescCommand(&hfdcan1, 0x67, VESC_COMMAND_SET_CURRENT, 3.0f);
-    // CAN_TransmitVescCommand(&hfdcan1, 0x68, VESC_COMMAND_SET_CURRENT_BRAKE, 12.0f);
+    //CAN_TransmitVescCommand(&hfdcan1, 0x68, VESC_COMMAND_SET_CURRENT_BRAKE, 12.0f);
     
     UART_TransmitMessageDMA(&huart1, &msg);
-    UART_ProcessRxDmaBuffer(&huart1, &hdma_usart1_rx);
+    UART_ProcessRxDmaBuffer(&huart1, &hfdcan1, &hdma_usart1_rx);
+    // uint8_t data[4];
+    // data[0] = 0x0;
+    // data[1] = 0x0;
+    // data[2] = 0x0;
+    // data[3] = 0x0;
+    // CAN_TransmitOverCan(&hfdcan1, 0x349, data, 4);
+    // CAN_TransmitVescCommand(&hfdcan1, 0x49, VESC_COMMAND_SET_RPM, 1000);
     HAL_Delay(500);
 
     /* USER CODE END WHILE */

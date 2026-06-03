@@ -54,7 +54,7 @@ void CAN_TransmitOverCan(FDCAN_HandleTypeDef *hfdcan, uint32_t id, uint8_t *data
 	}
 }
 
-void CAN_TransmitVescCommand(FDCAN_HandleTypeDef *hfdcan, VESC_Id_t vescID, VESC_Command_t command, float value)
+void CAN_TransmitVescCommand(FDCAN_HandleTypeDef *hfdcan, VESC_Id_t vescID, VESC_Command_t command, uint16_t value)
 {
 	// uint32_t id = ((uint32_t)vescID & 0xFF) | (((uint32_t)command & 0xFF) << 8);
 

@@ -1,5 +1,10 @@
 #include "uart.h"
+#include "can.h"
+#include "libVescCan/VESC_Consts.h"
+#include "stm32g4xx_hal.h"
+#include "stm32g4xx_hal_fdcan.h"
 #include <stdint.h>
+#include <sys/types.h>
 
 uint8_t tx_buffer[UART_TX_BUFFER_SIZE];
 uint8_t tx_buffer2[UART2_TX_BUFFER_SIZE];
@@ -9,6 +14,8 @@ uint8_t rx_buffer[UART_RX_BUFFER_SIZE] = {0};
 
 volatile uint8_t is_transmitting = 0;
 volatile uint8_t is_transmitting2 = 0;
+
+uint8_t brakeVescID = 0x49;
 
 static uint16_t getBufferPos(uint16_t position, uint16_t buffer_size)
 {
@@ -107,7 +114,7 @@ uint8_t getBufferPosToWrite(uint8_t wannaWrite)
     return wannaWrite % UART_TX_BUFFER_SIZE;
 }
 
-void UART_HandleIncomingMessage(UART_HandleTypeDef *logHuart, struct Message *msg)
+void UART_HandleIncomingMessage(UART_HandleTypeDef *huart, FDCAN_HandleTypeDef *hfdcan, struct Message *msg)
 {
     switch (msg->ID)
     {
@@ -134,35 +141,45 @@ void UART_HandleIncomingMessage(UART_HandleTypeDef *logHuart, struct Message *ms
         case SET_BRAKE_MOTOR_BRAKE_CURRENT:
         {
             int16_t current = (int16_t)((msg->data[0] << 8) | msg->data[1]);
-            //SetBrakeMotorCurrent(current);
+            CAN_TransmitVescCommand(hfdcan, brakeVescID, VESC_COMMAND_SET_CURRENT_BRAKE, current);
             break;
         }
 
         case SET_BRAKE_MOTOR_BRAKE_TORQUE:
         {
             int16_t torque = (int16_t)((msg->data[0] << 8) | msg->data[1]);
-            //SetBrakeMotorTorque(torque);
+            //
             break;
         }
 
         case SET_BRAKE_MOTOR_DRIVE_CURRENT:
         {
             int16_t current = (int16_t)((msg->data[0] << 8) | msg->data[1]);
-            //SetBrakeMotorDriveCurrent(current);
+            CAN_TransmitVescCommand(hfdcan, brakeVescID, VESC_COMMAND_SET_CURRENT, current);
             break;
         }
 
         case SET_BRAKE_MOTOR_SPEED:
         {
             int16_t rpm = (int16_t)((msg->data[0] << 8) | msg->data[1]);
-            //SetBrakeMotorSpeed(rpm);
+            CAN_TransmitVescCommand(hfdcan, brakeVescID, VESC_COMMAND_SET_RPM, rpm);
+            HAL_Delay(500);
+            CAN_TransmitVescCommand(hfdcan, brakeVescID, VESC_COMMAND_SET_RPM, rpm);
+            HAL_Delay(500);
+            CAN_TransmitVescCommand(hfdcan, brakeVescID, VESC_COMMAND_SET_RPM, rpm);
+            HAL_Delay(500);
+            CAN_TransmitVescCommand(hfdcan, brakeVescID, VESC_COMMAND_SET_RPM, rpm);
+            HAL_Delay(500);
+            CAN_TransmitVescCommand(hfdcan, brakeVescID, VESC_COMMAND_SET_RPM, rpm);
+            HAL_Delay(500);
+            
             break;
         }
 
         case SET_BRAKE_MOTOR_DUTY:
         {
             uint8_t duty = msg->data[0];
-            //SetBrakeMotorDuty(duty);
+            // CAN_TransmitVescCommand(hfdcan, brakeVescID, VESC_COMMAND_SET_DUTY, (float)duty);
             break;
         }
 
@@ -172,14 +189,13 @@ void UART_HandleIncomingMessage(UART_HandleTypeDef *logHuart, struct Message *ms
         case SET_TEST_MOTOR_BRAKE_CURRENT:
         {
             int16_t current = (int16_t)((msg->data[0] << 8) | msg->data[1]);
-            //SetTestMotorBrakeCurrent(current);
+            // CAN_TransmitVescCommand(hfdcan, testVescID, VESC_COMMAND_SET_CURRENT_BRAKE, (float)current);
             break;
         }
 
         case SET_TEST_MOTOR_BRAKE_TORQUE:
         {
             int16_t torque = (int16_t)((msg->data[0] << 8) | msg->data[1]);
-            //SetTestMotorBrakeTorque(torque);
             break;
         }
 
@@ -225,7 +241,7 @@ void UART_StartReceiveDMA(UART_HandleTypeDef *huart, DMA_HandleTypeDef *hdma_rx)
     HAL_UART_Receive_DMA(huart, rx_buffer, UART_RX_BUFFER_SIZE);
 }
 
-void UART_ProcessRxDmaBuffer(UART_HandleTypeDef *huart, DMA_HandleTypeDef *hdma_rx)
+void UART_ProcessRxDmaBuffer(UART_HandleTypeDef *huart, FDCAN_HandleTypeDef *hfdcan, DMA_HandleTypeDef *hdma_rx)
 {
     struct Message msg;
     uint16_t currentPos = UART_RX_BUFFER_SIZE - __HAL_DMA_GET_COUNTER(hdma_rx);
@@ -254,7 +270,7 @@ void UART_ProcessRxDmaBuffer(UART_HandleTypeDef *huart, DMA_HandleTypeDef *hdma_
 
                 rx_buffer[i] = 0;
                 i = getBufferPos(i + 1U + msg.size, UART_RX_BUFFER_SIZE);
-                UART_HandleIncomingMessage(huart, &msg);
+                UART_HandleIncomingMessage(huart, hfdcan, &msg);
                 //HAL_Delay(5);
                 HAL_UART_Transmit(huart, (uint8_t *)"\n", 1, HAL_MAX_DELAY);    
             }

@@ -33,6 +33,7 @@ extern "C" {
 /* USER CODE BEGIN Includes */
 #include <libVescCan/VESC.h>
 #include "vesc2halcan.h"
+#include "libVescCan/VESC_Consts.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
