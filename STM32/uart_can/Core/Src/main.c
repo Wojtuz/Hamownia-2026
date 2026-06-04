@@ -23,6 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "can.h"
+#include "enums.h"
 #include "libVescCan/VESC_Consts.h"
 #include "stm32g4xx_hal_fdcan.h"
 #include "stm32g4xx_hal_gpio.h"
@@ -118,12 +119,14 @@ volatile uint16_t torqueValue = 0;
 
 volatile bool brakeCommandActive = false;
 volatile uint8_t brakeMotorVescCommand = 0;
-volatile uint16_t brakeMotorVescData = 0;
+volatile float brakeMotorVescData = 0;
 
 volatile bool testCommandActive = false;
 volatile uint8_t testMotorVescCommand = 0;
-volatile uint16_t testMotorVescData = 0;
+volatile float testMotorVescData = 0;
 
+volatile struct MotorStatus brakeMotorStatus;
+volatile struct MotorStatus brakeTestStatus;
 
 /* USER CODE END PV */
 
@@ -267,19 +270,6 @@ int main(void)
 
   while (1)
   {
-    HAL_GPIO_TogglePin(LED_B_GPIO_Port, LED_B_Pin);
-    // CAN_TransmitVescCommand(&hfdcan1, 0x67, VESC_COMMAND_SET_CURRENT, 3.0f);
-    //CAN_TransmitVescCommand(&hfdcan1, 0x68, VESC_COMMAND_SET_CURRENT_BRAKE, 12.0f);
-    
-    //UART_TransmitMessageDMA(&huart1, &msg);
-    // uint8_t data[4];
-    // data[0] = 0x0;
-    // data[1] = 0x0;
-    // data[2] = 0x0;
-    // data[3] = 0x0;
-    // CAN_TransmitOverCan(&hfdcan1, 0x349, data, 4);
-    // CAN_TransmitVescCommand(&hfdcan1, 0x49, VESC_COMMAND_SET_RPM, 1000);
-    HAL_Delay(500);
 
     /* USER CODE END WHILE */
 
@@ -827,8 +817,6 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
       return;
     }
 
-    RxHeader.Identifier; // Process the received message ID
-
     HAL_GPIO_TogglePin(LED_B_GPIO_Port, LED_B_Pin);
   }
 }
@@ -924,7 +912,8 @@ void StartCanTxTestTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(10000);
+    CAN_TransmitVescCommand(&hfdcan1, brakeVescID, brakeMotorVescCommand, brakeMotorVescData);
+    osDelay(100);
   }
   /* USER CODE END StartCanTxTestTask */
 }
@@ -947,8 +936,8 @@ void StartUartTxTask(void *argument)
     struct Message msg;
     msg.ID = FEEDBACK_SENSOR_TORQUE;
     msg.size = 2;
-    msg.data[0] = 0x12;
-    msg.data[1] = 0x34;
+    msg.data[0] = (torqueValue >> 8) & 0xFF;
+    msg.data[1] = torqueValue & 0xFF;
 
     UART_TransmitMessageDMA(&huart1, &msg);
     osDelay(1000);

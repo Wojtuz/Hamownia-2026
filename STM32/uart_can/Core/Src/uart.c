@@ -23,11 +23,11 @@ extern volatile uint16_t torqueValue;
 
 extern volatile bool brakeCommandActive;
 extern volatile uint8_t brakeMotorVescCommand;
-extern volatile uint16_t brakeMotorVescData;
+extern volatile float brakeMotorVescData;
 
 extern volatile bool testCommandActive;
 extern volatile uint8_t testMotorVescCommand;
-extern volatile uint16_t testMotorVescData;
+extern volatile float testMotorVescData;
 
 static uint16_t getBufferPos(uint16_t position, uint16_t buffer_size)
 {
@@ -126,6 +126,20 @@ uint8_t getBufferPosToWrite(uint8_t wannaWrite)
     return wannaWrite % UART_TX_BUFFER_SIZE;
 }
 
+void updateBrakeCommand(uint8_t BrakeMotorVescCommand, uint32_t value)
+{
+    brakeMotorVescCommand = BrakeMotorVescCommand;
+    brakeMotorVescData = value;
+    brakeCommandActive = true;
+}
+
+void updateTestCommand(uint8_t TestMotorVescCommand, float value)
+{
+    testMotorVescCommand = TestMotorVescCommand;
+    testMotorVescData = value;
+    testCommandActive = true;
+}
+
 void UART_HandleIncomingMessage(UART_HandleTypeDef *huart, FDCAN_HandleTypeDef *hfdcan, struct Message *msg)
 {
     switch (msg->ID)
@@ -137,60 +151,45 @@ void UART_HandleIncomingMessage(UART_HandleTypeDef *huart, FDCAN_HandleTypeDef *
         {
             int16_t torque = (int16_t)((msg->data[0] << 8) | msg->data[1]);
 
-            // TODO: scale if needed (np. /100)
-            // float torque_Nm = torque / 100.0f;
-
-            // update control loop input
-            //UpdateTorqueFeedback(torque);
-
-            HAL_GPIO_TogglePin(LED_R_GPIO_Port, LED_R_Pin);
+            torqueValue = torque;
             break;
         }
 
         /* =========================
          * BRAKE MOTOR SETPOINTS
          * ========================= */
-        case SET_BRAKE_MOTOR_BRAKE_CURRENT:
+        case SET_BRAKE_MOTOR_BRAKE_TORQUE:
         {
-            int16_t current = (int16_t)((msg->data[0] << 8) | msg->data[1]);
-            CAN_TransmitVescCommand(hfdcan, brakeVescID, VESC_COMMAND_SET_CURRENT_BRAKE, current);
+            int16_t torque = (int32_t)((msg->data[0] << 8) | msg->data[1]);
+            torqueSetpoint = torque;
             break;
         }
 
-        case SET_BRAKE_MOTOR_BRAKE_TORQUE:
+        case SET_BRAKE_MOTOR_BRAKE_CURRENT: 
         {
-            int16_t torque = (int16_t)((msg->data[0] << 8) | msg->data[1]);
-            //
+            float current = (int32_t)((msg->data[0] << 8) | msg->data[1]) / 100.0f; // to libVescCan scaling
+            updateBrakeCommand(VESC_COMMAND_SET_CURRENT_BRAKE, current);
             break;
-        }
+        }    
 
         case SET_BRAKE_MOTOR_DRIVE_CURRENT:
         {
-            int16_t current = (int16_t)((msg->data[0] << 8) | msg->data[1]);
-            CAN_TransmitVescCommand(hfdcan, brakeVescID, VESC_COMMAND_SET_CURRENT, current);
+            float current = (int32_t)((msg->data[0] << 8) | msg->data[1]) / 100.0f;
+            updateBrakeCommand(VESC_COMMAND_SET_CURRENT, current);
             break;
         }
 
         case SET_BRAKE_MOTOR_SPEED:
         {
-            int16_t rpm = (int16_t)((msg->data[0] << 8) | msg->data[1]);
-            CAN_TransmitVescCommand(hfdcan, brakeVescID, VESC_COMMAND_SET_RPM, rpm);
-            HAL_Delay(500);
-            CAN_TransmitVescCommand(hfdcan, brakeVescID, VESC_COMMAND_SET_RPM, rpm);
-            HAL_Delay(500);
-            CAN_TransmitVescCommand(hfdcan, brakeVescID, VESC_COMMAND_SET_RPM, rpm);
-            HAL_Delay(500);
-            CAN_TransmitVescCommand(hfdcan, brakeVescID, VESC_COMMAND_SET_RPM, rpm);
-            HAL_Delay(500);
-            CAN_TransmitVescCommand(hfdcan, brakeVescID, VESC_COMMAND_SET_RPM, rpm);
-            HAL_Delay(500);
-            
+            float rpm = (int32_t)((msg->data[0] << 8) | msg->data[1]) / 1.0f;
+            updateBrakeCommand(VESC_COMMAND_SET_RPM, rpm);
             break;
         }
 
         case SET_BRAKE_MOTOR_DUTY:
         {
-            uint8_t duty = msg->data[0];
+            float duty = msg->data[0] / 100;
+            updateBrakeCommand(VESC_COMMAND_SET_DUTY, duty);
             // CAN_TransmitVescCommand(hfdcan, brakeVescID, VESC_COMMAND_SET_DUTY, (float)duty);
             break;
         }
@@ -198,30 +197,31 @@ void UART_HandleIncomingMessage(UART_HandleTypeDef *huart, FDCAN_HandleTypeDef *
         /* =========================
          * TEST MOTOR SETPOINTS
          * ========================= */
-        case SET_TEST_MOTOR_BRAKE_CURRENT:
-        {
-            int16_t current = (int16_t)((msg->data[0] << 8) | msg->data[1]);
-            // CAN_TransmitVescCommand(hfdcan, testVescID, VESC_COMMAND_SET_CURRENT_BRAKE, (float)current);
-            break;
-        }
-
         case SET_TEST_MOTOR_BRAKE_TORQUE:
         {
             int16_t torque = (int16_t)((msg->data[0] << 8) | msg->data[1]);
+            /// UNSUPPORTED
             break;
         }
 
+        case SET_TEST_MOTOR_BRAKE_CURRENT: 
+        {
+            int16_t current = (int16_t)((msg->data[0] << 8) | msg->data[1]) / 100.0f;
+            updateTestCommand(VESC_COMMAND_SET_CURRENT_BRAKE, current);
+            break;
+        }    
+
         case SET_TEST_MOTOR_DRIVE_CURRENT:
         {
-            int16_t current = (int16_t)((msg->data[0] << 8) | msg->data[1]);
-            //SetTestMotorDriveCurrent(current);
+            float current = (int32_t)((msg->data[0] << 8) | msg->data[1]) / 100.0f;
+            updateTestCommand(VESC_COMMAND_SET_CURRENT, current)
             break;
         }
 
         case SET_TEST_MOTOR_SPEED:
         {
-            int16_t rpm = (int16_t)((msg->data[0] << 8) | msg->data[1]);
-            //SetTestMotorSpeed(rpm);
+            float rpm = (int32_t)((msg->data[0] << 8) | msg->data[1]);
+            updateTestCommand(VESC_COMMAND_SET_RPM, rpm);
             break;
         }
 
@@ -231,14 +231,14 @@ void UART_HandleIncomingMessage(UART_HandleTypeDef *huart, FDCAN_HandleTypeDef *
         case CONFIG_TEST_MOTOR_FRAMES:
         {
             uint16_t mask = (msg->data[0] << 8) | msg->data[1];
-            //SetTestMotorFrameMask(mask);
+            ///UNSUPPORTED YET
             break;
         }
 
         case CONFIG_TEST_MOTOR_CAN_ID:
         {
             uint8_t can_id = msg->data[0];
-            //SetTestMotorCANId(can_id);
+            testVescID = can_id;
             break;
         }
 

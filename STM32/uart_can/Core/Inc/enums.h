@@ -116,4 +116,16 @@ struct Message
     uint8_t data[4];
 };
 
+struct MotorStatus
+{
+    int16_t current;        // 0.01A
+    uint16_t voltage;       // 0.01V
+    int16_t power;          // 0.1W
+    int16_t speed;          // RPM
+    int8_t temperature;     // °C
+    uint16_t position;      // 0.01°
+
+    uint8_t online;         // czy ostatnio odebrano dane
+};
+
 #endif /* INC_ENUMS_H_ */
