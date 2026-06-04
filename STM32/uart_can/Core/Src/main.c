@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -65,6 +66,41 @@ UART_HandleTypeDef huart1;
 DMA_HandleTypeDef hdma_usart1_rx;
 DMA_HandleTypeDef hdma_usart1_tx;
 
+/* Definitions for blinkTask */
+osThreadId_t blinkTaskHandle;
+const osThreadAttr_t blinkTask_attributes = {
+  .name = "blinkTask",
+  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 128 * 4
+};
+/* Definitions for regulatorTask */
+osThreadId_t regulatorTaskHandle;
+const osThreadAttr_t regulatorTask_attributes = {
+  .name = "regulatorTask",
+  .priority = (osPriority_t) osPriorityRealtime,
+  .stack_size = 128 * 4
+};
+/* Definitions for uartTask */
+osThreadId_t uartTaskHandle;
+const osThreadAttr_t uartTask_attributes = {
+  .name = "uartTask",
+  .priority = (osPriority_t) osPriorityHigh,
+  .stack_size = 128 * 4
+};
+/* Definitions for canBrakeTask */
+osThreadId_t canBrakeTaskHandle;
+const osThreadAttr_t canBrakeTask_attributes = {
+  .name = "canBrakeTask",
+  .priority = (osPriority_t) osPriorityRealtime1,
+  .stack_size = 128 * 4
+};
+/* Definitions for canTestTask */
+osThreadId_t canTestTaskHandle;
+const osThreadAttr_t canTestTask_attributes = {
+  .name = "canTestTask",
+  .priority = (osPriority_t) osPriorityRealtime2,
+  .stack_size = 128 * 4
+};
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -81,6 +117,12 @@ static void MX_SPI2_Init(void);
 static void MX_I2C3_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_USART1_UART_Init(void);
+void StartBlinkTask(void *argument);
+void StartRegulatorTask(void *argument);
+void StartUartTask(void *argument);
+void StartCanBrakeTask(void *argument);
+void StartCanTestTask(void *argument);
+
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -130,7 +172,6 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   FDCAN_Config(&hfdcan1);
-  UART_StartReceiveDMA(&huart1, &hdma_usart1_rx);
   
   struct Message msg;
   msg.ID = FEEDBACK_SENSOR_TORQUE;
@@ -140,6 +181,54 @@ int main(void)
 
 
   /* USER CODE END 2 */
+
+  /* Init scheduler */
+  osKernelInitialize();
+
+  /* USER CODE BEGIN RTOS_MUTEX */
+  /* add mutexes, ... */
+  /* USER CODE END RTOS_MUTEX */
+
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* add semaphores, ... */
+  /* USER CODE END RTOS_SEMAPHORES */
+
+  /* USER CODE BEGIN RTOS_TIMERS */
+  /* start timers, add new ones, ... */
+  /* USER CODE END RTOS_TIMERS */
+
+  /* USER CODE BEGIN RTOS_QUEUES */
+  /* add queues, ... */
+  /* USER CODE END RTOS_QUEUES */
+
+  /* Create the thread(s) */
+  /* creation of blinkTask */
+  blinkTaskHandle = osThreadNew(StartBlinkTask, NULL, &blinkTask_attributes);
+
+  /* creation of regulatorTask */
+  regulatorTaskHandle = osThreadNew(StartRegulatorTask, NULL, &regulatorTask_attributes);
+
+  /* creation of uartTask */
+  uartTaskHandle = osThreadNew(StartUartTask, NULL, &uartTask_attributes);
+
+  /* creation of canBrakeTask */
+  canBrakeTaskHandle = osThreadNew(StartCanBrakeTask, NULL, &canBrakeTask_attributes);
+
+  /* creation of canTestTask */
+  canTestTaskHandle = osThreadNew(StartCanTestTask, NULL, &canTestTask_attributes);
+
+  /* USER CODE BEGIN RTOS_THREADS */
+  /* add threads, ... */
+  /* USER CODE END RTOS_THREADS */
+
+  /* USER CODE BEGIN RTOS_EVENTS */
+  /* add events, ... */
+  /* USER CODE END RTOS_EVENTS */
+
+  /* Start scheduler */
+  osKernelStart();
+
+  /* We should never get here as control is now taken by the scheduler */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
@@ -152,7 +241,6 @@ int main(void)
     //CAN_TransmitVescCommand(&hfdcan1, 0x68, VESC_COMMAND_SET_CURRENT_BRAKE, 12.0f);
     
     UART_TransmitMessageDMA(&huart1, &msg);
-    UART_ProcessRxDmaBuffer(&huart1, &hfdcan1, &hdma_usart1_rx);
     // uint8_t data[4];
     // data[0] = 0x0;
     // data[1] = 0x0;
@@ -623,13 +711,13 @@ static void MX_DMA_Init(void)
 
   /* DMA interrupt init */
   /* DMA1_Channel1_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
   /* DMA1_Channel2_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel2_IRQn);
   /* DMA2_Channel1_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Channel1_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(DMA2_Channel1_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA2_Channel1_IRQn);
 
 }
@@ -714,6 +802,101 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
   }
 }
 /* USER CODE END 4 */
+
+/* USER CODE BEGIN Header_StartBlinkTask */
+/**
+  * @brief  Function implementing the blinkTask thread.
+  * @param  argument: Not used
+  * @retval None
+  */
+/* USER CODE END Header_StartBlinkTask */
+void StartBlinkTask(void *argument)
+{
+  /* USER CODE BEGIN 5 */
+  /* Infinite loop */
+  for(;;)
+  {
+    HAL_GPIO_TogglePin(LED_B_GPIO_Port, LED_B_Pin);
+    osDelay(1000);
+  }
+  /* USER CODE END 5 */
+}
+
+/* USER CODE BEGIN Header_StartRegulatorTask */
+/**
+* @brief Function implementing the regulatorTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartRegulatorTask */
+void StartRegulatorTask(void *argument)
+{
+  /* USER CODE BEGIN StartRegulatorTask */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END StartRegulatorTask */
+}
+
+/* USER CODE BEGIN Header_StartUartTask */
+/**
+* @brief Function implementing the uartTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartUartTask */
+void StartUartTask(void *argument)
+{
+  /* USER CODE BEGIN StartUartTask */
+  /* Infinite loop */
+  UART_StartReceiveDMA(&huart1, &hdma_usart1_rx);
+
+  for(;;)
+  {
+    UART_ProcessRxDmaBuffer(&huart1, &hfdcan1, &hdma_usart1_rx);
+
+    osDelay(10);
+  }
+  /* USER CODE END StartUartTask */
+}
+
+/* USER CODE BEGIN Header_StartCanBrakeTask */
+/**
+* @brief Function implementing the canBrakeTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartCanBrakeTask */
+void StartCanBrakeTask(void *argument)
+{
+  /* USER CODE BEGIN StartCanBrakeTask */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END StartCanBrakeTask */
+}
+
+/* USER CODE BEGIN Header_StartCanTestTask */
+/**
+* @brief Function implementing the canTestTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartCanTestTask */
+void StartCanTestTask(void *argument)
+{
+  /* USER CODE BEGIN StartCanTestTask */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END StartCanTestTask */
+}
 
 /**
   * @brief  Period elapsed callback in non blocking mode

@@ -251,7 +251,7 @@ void UART_ProcessRxDmaBuffer(UART_HandleTypeDef *huart, FDCAN_HandleTypeDef *hfd
     {
         for (uint16_t i = last_rx_pos; i != currentPos; i = getBufferPos(i + 1U, UART_RX_BUFFER_SIZE))
         {
-            HAL_UART_Transmit(huart, rx_buffer, UART_RX_BUFFER_SIZE, HAL_MAX_DELAY);
+            //HAL_UART_Transmit(huart, rx_buffer, UART_RX_BUFFER_SIZE, HAL_MAX_DELAY);
             //HAL_Delay(10);
 
             if (rx_buffer[i] == 0xAA)
@@ -272,7 +272,7 @@ void UART_ProcessRxDmaBuffer(UART_HandleTypeDef *huart, FDCAN_HandleTypeDef *hfd
                 i = getBufferPos(i + 1U + msg.size, UART_RX_BUFFER_SIZE);
                 UART_HandleIncomingMessage(huart, hfdcan, &msg);
                 //HAL_Delay(5);
-                HAL_UART_Transmit(huart, (uint8_t *)"\n", 1, HAL_MAX_DELAY);    
+                //HAL_UART_Transmit(huart, (uint8_t *)"\n", 1, HAL_MAX_DELAY);    
             }
             else
             {
