@@ -238,7 +238,18 @@ void UART_HandleIncomingMessage(UART_HandleTypeDef *huart, FDCAN_HandleTypeDef *
 
 void UART_StartReceiveDMA(UART_HandleTypeDef *huart, DMA_HandleTypeDef *hdma_rx)
 {
-    HAL_UART_Receive_DMA(huart, rx_buffer, UART_RX_BUFFER_SIZE);
+    HAL_StatusTypeDef status;
+
+    status = HAL_UART_Receive_DMA(
+        huart,
+        rx_buffer,
+        UART_RX_BUFFER_SIZE
+    );
+
+    if(status != HAL_OK)
+    {
+        Error_Handler();
+    }
 }
 
 void UART_ProcessRxDmaBuffer(UART_HandleTypeDef *huart, FDCAN_HandleTypeDef *hfdcan, DMA_HandleTypeDef *hdma_rx)

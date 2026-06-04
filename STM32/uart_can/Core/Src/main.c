@@ -179,7 +179,16 @@ int main(void)
   msg.data[0] = 0x12;
   msg.data[1] = 0x34;
 
+  // UART_TransmitMessageDMA(&huart1, &msg);
+  
+  HAL_UART_Transmit(&huart1, (uint8_t *)"Hello, UART!\n", 14, HAL_MAX_DELAY);
 
+  HAL_Delay(10000);
+  UART_TransmitMessageDMA(&huart1, &msg);
+  HAL_Delay(10000);
+  
+
+  UART_StartReceiveDMA(&huart1, &hdma_usart1_rx);
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -223,6 +232,8 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_EVENTS */
   /* add events, ... */
+  
+
   /* USER CODE END RTOS_EVENTS */
 
   /* Start scheduler */
@@ -835,7 +846,7 @@ void StartRegulatorTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    osDelay(10000);
   }
   /* USER CODE END StartRegulatorTask */
 }
@@ -851,7 +862,6 @@ void StartUartTask(void *argument)
 {
   /* USER CODE BEGIN StartUartTask */
   /* Infinite loop */
-  UART_StartReceiveDMA(&huart1, &hdma_usart1_rx);
 
   for(;;)
   {
@@ -875,7 +885,7 @@ void StartCanBrakeTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    osDelay(10000);
   }
   /* USER CODE END StartCanBrakeTask */
 }
@@ -893,7 +903,7 @@ void StartCanTestTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    osDelay(10000);
   }
   /* USER CODE END StartCanTestTask */
 }
