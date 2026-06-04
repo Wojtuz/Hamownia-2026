@@ -110,6 +110,21 @@ const osThreadAttr_t uartTxTask_attributes = {
 };
 /* USER CODE BEGIN PV */
 
+volatile uint8_t brakeVescID = 0x49;
+volatile uint8_t testVescID = 0x70;
+
+volatile uint16_t torqueSetpointValue = 0;
+volatile uint16_t torqueCurrentValue = 0;
+
+volatile bool brakeCommandActive = false;
+volatile uint8_t brakeMotorVescCommand = 0;
+volatile uint16_t brakeMotorVescData = 0;
+
+volatile bool testCommandActive = false;
+volatile uint8_t testMotorVescCommand = 0;
+volatile uint16_t testMotorVescData = 0;
+
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -866,6 +881,8 @@ void StartRegulatorTask(void *argument)
 void StartUartRxTask(void *argument)
 {
   /* USER CODE BEGIN StartUartRxTask */
+  /// Commands from ESP
+
   /* Infinite loop */
   for(;;)
   {
@@ -922,6 +939,8 @@ void StartCanTxTestTask(void *argument)
 void StartUartTxTask(void *argument)
 {
   /* USER CODE BEGIN StartUartTxTask */
+  /// Feedback to ESP
+
   /* Infinite loop */
   for(;;)
   {

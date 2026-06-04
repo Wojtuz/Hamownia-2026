@@ -15,7 +15,19 @@ uint8_t rx_buffer[UART_RX_BUFFER_SIZE] = {0};
 volatile uint8_t is_transmitting = 0;
 volatile uint8_t is_transmitting2 = 0;
 
-uint8_t brakeVescID = 0x49;
+extern uint8_t brakeVescID;
+extern uint8_t testVescID;
+
+extern volatile uint16_t torqueSetpointValue;
+extern volatile uint16_t torqueCurrentValue;
+
+extern volatile bool brakeCommandActive;
+extern volatile uint8_t brakeMotorVescCommand;
+extern volatile uint16_t brakeMotorVescData;
+
+extern volatile bool testCommandActive;
+extern volatile uint8_t testMotorVescCommand;
+extern volatile uint16_t testMotorVescData;
 
 static uint16_t getBufferPos(uint16_t position, uint16_t buffer_size)
 {
