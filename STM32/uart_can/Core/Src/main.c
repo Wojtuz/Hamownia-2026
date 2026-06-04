@@ -77,28 +77,35 @@ const osThreadAttr_t blinkTask_attributes = {
 osThreadId_t regulatorTaskHandle;
 const osThreadAttr_t regulatorTask_attributes = {
   .name = "regulatorTask",
-  .priority = (osPriority_t) osPriorityRealtime,
+  .priority = (osPriority_t) osPriorityNormal,
   .stack_size = 128 * 4
 };
-/* Definitions for uartTask */
-osThreadId_t uartTaskHandle;
-const osThreadAttr_t uartTask_attributes = {
-  .name = "uartTask",
-  .priority = (osPriority_t) osPriorityHigh,
+/* Definitions for uartRxTask */
+osThreadId_t uartRxTaskHandle;
+const osThreadAttr_t uartRxTask_attributes = {
+  .name = "uartRxTask",
+  .priority = (osPriority_t) osPriorityNormal,
   .stack_size = 128 * 4
 };
-/* Definitions for canBrakeTask */
-osThreadId_t canBrakeTaskHandle;
-const osThreadAttr_t canBrakeTask_attributes = {
-  .name = "canBrakeTask",
-  .priority = (osPriority_t) osPriorityRealtime1,
+/* Definitions for canTxBrakeTask */
+osThreadId_t canTxBrakeTaskHandle;
+const osThreadAttr_t canTxBrakeTask_attributes = {
+  .name = "canTxBrakeTask",
+  .priority = (osPriority_t) osPriorityNormal,
   .stack_size = 128 * 4
 };
-/* Definitions for canTestTask */
-osThreadId_t canTestTaskHandle;
-const osThreadAttr_t canTestTask_attributes = {
-  .name = "canTestTask",
-  .priority = (osPriority_t) osPriorityRealtime2,
+/* Definitions for canTxTestTask */
+osThreadId_t canTxTestTaskHandle;
+const osThreadAttr_t canTxTestTask_attributes = {
+  .name = "canTxTestTask",
+  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 128 * 4
+};
+/* Definitions for uartTxTask */
+osThreadId_t uartTxTaskHandle;
+const osThreadAttr_t uartTxTask_attributes = {
+  .name = "uartTxTask",
+  .priority = (osPriority_t) osPriorityNormal,
   .stack_size = 128 * 4
 };
 /* USER CODE BEGIN PV */
@@ -119,9 +126,10 @@ static void MX_ADC1_Init(void);
 static void MX_USART1_UART_Init(void);
 void StartBlinkTask(void *argument);
 void StartRegulatorTask(void *argument);
-void StartUartTask(void *argument);
+void StartUartRxTask(void *argument);
 void StartCanBrakeTask(void *argument);
-void StartCanTestTask(void *argument);
+void StartCanTxTestTask(void *argument);
+void StartUartTxTask(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -173,19 +181,13 @@ int main(void)
   /* USER CODE BEGIN 2 */
   FDCAN_Config(&hfdcan1);
   
-  struct Message msg;
-  msg.ID = FEEDBACK_SENSOR_TORQUE;
-  msg.size = 2;
-  msg.data[0] = 0x12;
-  msg.data[1] = 0x34;
 
-  // UART_TransmitMessageDMA(&huart1, &msg);
   
-  HAL_UART_Transmit(&huart1, (uint8_t *)"Hello, UART!\n", 14, HAL_MAX_DELAY);
+  // HAL_UART_Transmit(&huart1, (uint8_t *)"Hello, UART!\n", 14, HAL_MAX_DELAY);
 
-  HAL_Delay(10000);
-  UART_TransmitMessageDMA(&huart1, &msg);
-  HAL_Delay(10000);
+  // HAL_Delay(10000);
+  // UART_TransmitMessageDMA(&huart1, &msg);
+  // HAL_Delay(10000);
   
 
   UART_StartReceiveDMA(&huart1, &hdma_usart1_rx);
@@ -217,14 +219,17 @@ int main(void)
   /* creation of regulatorTask */
   regulatorTaskHandle = osThreadNew(StartRegulatorTask, NULL, &regulatorTask_attributes);
 
-  /* creation of uartTask */
-  uartTaskHandle = osThreadNew(StartUartTask, NULL, &uartTask_attributes);
+  /* creation of uartRxTask */
+  uartRxTaskHandle = osThreadNew(StartUartRxTask, NULL, &uartRxTask_attributes);
 
-  /* creation of canBrakeTask */
-  canBrakeTaskHandle = osThreadNew(StartCanBrakeTask, NULL, &canBrakeTask_attributes);
+  /* creation of canTxBrakeTask */
+  canTxBrakeTaskHandle = osThreadNew(StartCanBrakeTask, NULL, &canTxBrakeTask_attributes);
 
-  /* creation of canTestTask */
-  canTestTaskHandle = osThreadNew(StartCanTestTask, NULL, &canTestTask_attributes);
+  /* creation of canTxTestTask */
+  canTxTestTaskHandle = osThreadNew(StartCanTxTestTask, NULL, &canTxTestTask_attributes);
+
+  /* creation of uartTxTask */
+  uartTxTaskHandle = osThreadNew(StartUartTxTask, NULL, &uartTxTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -251,7 +256,7 @@ int main(void)
     // CAN_TransmitVescCommand(&hfdcan1, 0x67, VESC_COMMAND_SET_CURRENT, 3.0f);
     //CAN_TransmitVescCommand(&hfdcan1, 0x68, VESC_COMMAND_SET_CURRENT_BRAKE, 12.0f);
     
-    UART_TransmitMessageDMA(&huart1, &msg);
+    //UART_TransmitMessageDMA(&huart1, &msg);
     // uint8_t data[4];
     // data[0] = 0x0;
     // data[1] = 0x0;
@@ -851,25 +856,23 @@ void StartRegulatorTask(void *argument)
   /* USER CODE END StartRegulatorTask */
 }
 
-/* USER CODE BEGIN Header_StartUartTask */
+/* USER CODE BEGIN Header_StartUartRxTask */
 /**
-* @brief Function implementing the uartTask thread.
+* @brief Function implementing the uartRxTask thread.
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_StartUartTask */
-void StartUartTask(void *argument)
+/* USER CODE END Header_StartUartRxTask */
+void StartUartRxTask(void *argument)
 {
-  /* USER CODE BEGIN StartUartTask */
+  /* USER CODE BEGIN StartUartRxTask */
   /* Infinite loop */
-
   for(;;)
   {
     UART_ProcessRxDmaBuffer(&huart1, &hfdcan1, &hdma_usart1_rx);
-
     osDelay(10);
   }
-  /* USER CODE END StartUartTask */
+  /* USER CODE END StartUartRxTask */
 }
 
 /* USER CODE BEGIN Header_StartCanBrakeTask */
@@ -885,27 +888,53 @@ void StartCanBrakeTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
+
     osDelay(10000);
   }
   /* USER CODE END StartCanBrakeTask */
 }
 
-/* USER CODE BEGIN Header_StartCanTestTask */
+/* USER CODE BEGIN Header_StartCanTxTestTask */
 /**
-* @brief Function implementing the canTestTask thread.
+* @brief Function implementing the canTxTestTask thread.
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_StartCanTestTask */
-void StartCanTestTask(void *argument)
+/* USER CODE END Header_StartCanTxTestTask */
+void StartCanTxTestTask(void *argument)
 {
-  /* USER CODE BEGIN StartCanTestTask */
+  /* USER CODE BEGIN StartCanTxTestTask */
   /* Infinite loop */
   for(;;)
   {
     osDelay(10000);
   }
-  /* USER CODE END StartCanTestTask */
+  /* USER CODE END StartCanTxTestTask */
+}
+
+/* USER CODE BEGIN Header_StartUartTxTask */
+/**
+* @brief Function implementing the uartTxTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartUartTxTask */
+void StartUartTxTask(void *argument)
+{
+  /* USER CODE BEGIN StartUartTxTask */
+  /* Infinite loop */
+  for(;;)
+  {
+    struct Message msg;
+    msg.ID = FEEDBACK_SENSOR_TORQUE;
+    msg.size = 2;
+    msg.data[0] = 0x12;
+    msg.data[1] = 0x34;
+
+    UART_TransmitMessageDMA(&huart1, &msg);
+    osDelay(1000);
+  }
+  /* USER CODE END StartUartTxTask */
 }
 
 /**
