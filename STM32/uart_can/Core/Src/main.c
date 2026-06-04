@@ -113,8 +113,8 @@ const osThreadAttr_t uartTxTask_attributes = {
 volatile uint8_t brakeVescID = 0x49;
 volatile uint8_t testVescID = 0x70;
 
-volatile uint16_t torqueSetpointValue = 0;
-volatile uint16_t torqueCurrentValue = 0;
+volatile uint16_t torqueSetpoint = 0;
+volatile uint16_t torqueValue = 0;
 
 volatile bool brakeCommandActive = false;
 volatile uint8_t brakeMotorVescCommand = 0;

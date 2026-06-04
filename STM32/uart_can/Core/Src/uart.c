@@ -18,8 +18,8 @@ volatile uint8_t is_transmitting2 = 0;
 extern uint8_t brakeVescID;
 extern uint8_t testVescID;
 
-extern volatile uint16_t torqueSetpointValue;
-extern volatile uint16_t torqueCurrentValue;
+extern volatile uint16_t torqueSetpoint;
+extern volatile uint16_t torqueValue;
 
 extern volatile bool brakeCommandActive;
 extern volatile uint8_t brakeMotorVescCommand;
