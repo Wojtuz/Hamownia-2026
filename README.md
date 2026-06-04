@@ -84,7 +84,7 @@ AA 01 10 20
 | 0x44 | FEEDBACK_BRAKE_MOTOR_SPEED       | 2           | 1 = 1 rpm         | Prędkość silnika hamującego         | VESC -> STM32 -> ESP B -> Web     |
 | 0x45 | FEEDBACK_BRAKE_MOTOR_TEMPERATURE | 1           | 1 = 1 °C          | Temperatura silnika hamującego      | VESC -> STM32 -> ESP B -> Web     |
 | 0x48 | FEEDBACK_BRAKE_MOTOR_POSITION    | 2           | 100 = 1°          | Pozycja wału 0-360°                 | VESC -> STM32 -> ESP B -> Web     |
-| 0x61 | SET_BRAKE_MOTOR_BRAKE_CURRENT    | 2           | 10 = 1 A          | Ustawienie prądu hamowania          | Web -> ESP B -> STM32 -> VESC     |
+| 0x61 | SET_BRAKE_MOTOR_BRAKE_CURRENT    | 2           | 100 = 1 A         | Ustawienie prądu hamowania          | Web -> ESP B -> STM32 -> VESC     |
 | 0x62 | SET_BRAKE_MOTOR_BRAKE_TORQUE     | 2           | 100 = 1 Nm        | Ustawienie momentu hamowania (PID)  | Web -> ESP B -> STM32 -> VESC     |
 | 0x63 | SET_BRAKE_MOTOR_DRIVE_CURRENT    | 2           | 10 = 1 A          | Ustawienie prądu hamowania          | Web -> ESP B -> STM32 -> VESC     |
 | 0x64 | SET_BRAKE_MOTOR_SPEED            | 2           | 1 = 1 rpm         | Ustawienie prędkości silnika        | Web -> ESP B -> STM32 -> VESC     |
@@ -94,7 +94,7 @@ AA 01 10 20
 | 0x83 | FEEDBACK_TEST_MOTOR_POWER        | 2           | 10 = 1 W          | Moc silnika badanego                | DRV/Base -> STM32 -> ESP B -> Web |
 | 0x84 | FEEDBACK_TEST_MOTOR_SPEED        | 2           | 1 = 1 rpm         | Prędkość silnika badanego           | DRV/Base -> STM32 -> ESP B -> Web |
 | 0x85 | FEEDBACK_TEST_MOTOR_TEMPERATURE  | 1           | 1 = 1 °C          | Temperatura silnika badanego        | DRV/Base -> STM32 -> ESP B -> Web |
-| 0xA1 | SET_TEST_MOTOR_BRAKE_CURRENT     | 2           | 10 = 1 A          | Ustawienie prądu hamowania          | Web -> ESP B -> STM32 -> DRV      |
+| 0xA1 | SET_TEST_MOTOR_BRAKE_CURRENT     | 2           | 100 = 1 A         | Ustawienie prądu hamowania          | Web -> ESP B -> STM32 -> DRV      |
 | 0xA2 | SET_TEST_MOTOR_BRAKE_TORQUE      | 2           | 100 = 1 Nm        | Ustawienie momentu hamowania (PID)  | Web -> ESP B -> STM32 -> DRV      |
 | 0xA3 | SET_TEST_MOTOR_DRIVE_CURRENT     | 2           | 10 = 1 A          | Ustawienie prądu hamowania          | Web -> ESP B -> STM32 -> DRV      |
 | 0xA4 | SET_TEST_MOTOR_SPEED             | 2           | 1 = 1 rpm         | Ustawienie momentu hamowania (PID)  | Web -> ESP B -> STM32 -> DRV      |
