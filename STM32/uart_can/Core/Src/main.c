@@ -25,9 +25,12 @@
 #include "can.h"
 #include "enums.h"
 #include "libVescCan/VESC_Consts.h"
+#include "libVescCan/VESC_Convert.h"
+#include "libVescCan/VESC_Structs.h"
 #include "stm32g4xx_hal_fdcan.h"
 #include "stm32g4xx_hal_gpio.h"
 #include "stm32g4xx_hal_uart.h"
+#include "vesc2halcan.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -126,7 +129,7 @@ volatile uint8_t testMotorVescCommand = 0;
 volatile float testMotorVescData = 0;
 
 volatile struct MotorStatus brakeMotorStatus;
-volatile struct MotorStatus brakeTestStatus;
+volatile struct MotorStatus testMotorStatus;
 
 /* USER CODE END PV */
 
@@ -817,7 +820,74 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
       return;
     }
 
-    HAL_GPIO_TogglePin(LED_B_GPIO_Port, LED_B_Pin);
+    uint8_t realID = (uint8_t)RxHeader.Identifier & 0xFF;
+    if ( !(realID == brakeVescID || realID == testVescID) ) 
+    {  
+      return;  
+    }
+
+    uint8_t message = (uint8_t)((RxHeader.Identifier >> 8) & 0xFF);    
+    VESC_RawFrame rawFrame;
+
+    halcan2vesc(&rawFrame, &RxHeader, RxData);
+
+    if (realID == brakeVescID)
+    {
+      switch (message) 
+      {
+        case VESC_COMMAND_STATUS_1:
+        {
+          VESC_Status_1 status1;
+
+          VESC_convertRawToStatus1(&status1, &rawFrame);
+          //Ignore duty because who cares
+          brakeMotorStatus.speed = status1.erpm;
+          brakeMotorStatus.current = status1.current * 100.0f;
+          break;
+        }
+        case VESC_COMMAND_STATUS_5:
+        {
+          VESC_Status_5 status5;
+
+          VESC_convertRawToStatus5(&status5, &rawFrame);
+          brakeMotorStatus.voltage = status5.voltsIn * 100.0f;
+          break;
+        }
+        default:
+        {
+          break;
+        }
+      }
+    }
+    if (realID == testVescID)
+    {
+      switch (message) 
+      {
+        case VESC_COMMAND_STATUS_1:
+        {
+          VESC_Status_1 status1;
+
+          VESC_convertRawToStatus1(&status1, &rawFrame);
+          //Ignore duty because who cares
+          testMotorStatus.speed = status1.erpm;
+          testMotorStatus.current = status1.current * 100.0f;
+          break;
+        }
+        case VESC_COMMAND_STATUS_5:
+        {
+          VESC_Status_5 status5;
+
+          VESC_convertRawToStatus5(&status5, &rawFrame);
+          testMotorStatus.voltage = status5.voltsIn * 100.0f;
+          break;
+        }
+        default:
+        {
+          break;
+        }
+      }
+    }
+    
   }
 }
 /* USER CODE END 4 */
@@ -934,12 +1004,21 @@ void StartUartTxTask(void *argument)
   for(;;)
   {
     struct Message msg;
-    msg.ID = FEEDBACK_SENSOR_TORQUE;
-    msg.size = 2;
-    msg.data[0] = (torqueValue >> 8) & 0xFF;
-    msg.data[1] = torqueValue & 0xFF;
 
+    UART_CreateMessage16(&msg, FEEDBACK_BRAKE_MOTOR_SPEED, brakeMotorStatus.speed);
     UART_TransmitMessageDMA(&huart1, &msg);
+    UART_CreateMessage16(&msg, FEEDBACK_BRAKE_MOTOR_CURRENT, brakeMotorStatus.current);
+    UART_TransmitMessageDMA(&huart1, &msg);
+    UART_CreateMessage16(&msg, FEEDBACK_BRAKE_MOTOR_VOLTAGE, brakeMotorStatus.voltage);
+    UART_TransmitMessageDMA(&huart1, &msg);
+
+    UART_CreateMessage16(&msg, FEEDBACK_TEST_MOTOR_SPEED, brakeMotorStatus.speed);
+    UART_TransmitMessageDMA(&huart1, &msg);
+    UART_CreateMessage16(&msg, FEEDBACK_TEST_MOTOR_CURRENT, brakeMotorStatus.current);
+    UART_TransmitMessageDMA(&huart1, &msg);
+    UART_CreateMessage16(&msg, FEEDBACK_TEST_MOTOR_VOLTAGE, brakeMotorStatus.voltage);
+    UART_TransmitMessageDMA(&huart1, &msg);
+    
     osDelay(1000);
   }
   /* USER CODE END StartUartTxTask */

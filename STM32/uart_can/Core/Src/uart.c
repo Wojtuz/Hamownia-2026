@@ -99,18 +99,18 @@ void UART_CreateMessage32(struct Message *msg, MsgID id, uint32_t data)
 {
     msg->ID = id;
     msg->size = getMessageSize(id);
-    msg->data[0] = data & 0xFF; // Low byte
-    msg->data[1] = (data >> 8) & 0xFF; // High byte
-    msg->data[2] = (data >> 16) & 0xFF; // Middle byte
-    msg->data[3] = (data >> 24) & 0xFF; // High byte
+    msg->data[3] = data & 0xFF; // Low byte
+    msg->data[2] = (data >> 8) & 0xFF; // High byte
+    msg->data[1] = (data >> 16) & 0xFF; // Middle byte
+    msg->data[0] = (data >> 24) & 0xFF; // High byte
 }
 
 void UART_CreateMessage16(struct Message *msg, MsgID id, uint16_t data)
 {
     msg->ID = id;
     msg->size = getMessageSize(id);
-    msg->data[0] = data & 0xFF; // Low byte
-    msg->data[1] = (data >> 8) & 0xFF; // High byte
+    msg->data[1] = data & 0xFF; // Low byte
+    msg->data[0] = (data >> 8) & 0xFF; // High byte
 }
 
 void UART_CreateMessage8(struct Message *msg, MsgID id, uint8_t data)
@@ -214,7 +214,7 @@ void UART_HandleIncomingMessage(UART_HandleTypeDef *huart, FDCAN_HandleTypeDef *
         case SET_TEST_MOTOR_DRIVE_CURRENT:
         {
             float current = (int32_t)((msg->data[0] << 8) | msg->data[1]) / 100.0f;
-            updateTestCommand(VESC_COMMAND_SET_CURRENT, current)
+            updateTestCommand(VESC_COMMAND_SET_CURRENT, current);
             break;
         }
 
