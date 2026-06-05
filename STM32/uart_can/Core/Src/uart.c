@@ -126,7 +126,7 @@ uint8_t getBufferPosToWrite(uint8_t wannaWrite)
     return wannaWrite % UART_TX_BUFFER_SIZE;
 }
 
-void updateBrakeCommand(uint8_t BrakeMotorVescCommand, uint32_t value)
+void updateBrakeCommand(uint8_t BrakeMotorVescCommand, float value)
 {
     brakeMotorVescCommand = BrakeMotorVescCommand;
     brakeMotorVescData = value;
@@ -188,7 +188,7 @@ void UART_HandleIncomingMessage(UART_HandleTypeDef *huart, FDCAN_HandleTypeDef *
 
         case SET_BRAKE_MOTOR_DUTY:
         {
-            float duty = msg->data[0] / 100;
+            float duty = msg->data[0] / 100.0f;
             updateBrakeCommand(VESC_COMMAND_SET_DUTY, duty);
             // CAN_TransmitVescCommand(hfdcan, brakeVescID, VESC_COMMAND_SET_DUTY, (float)duty);
             break;
@@ -206,7 +206,7 @@ void UART_HandleIncomingMessage(UART_HandleTypeDef *huart, FDCAN_HandleTypeDef *
 
         case SET_TEST_MOTOR_BRAKE_CURRENT: 
         {
-            int16_t current = (int16_t)((msg->data[0] << 8) | msg->data[1]) / 100.0f;
+            float current = (int16_t)((msg->data[0] << 8) | msg->data[1]) / 100.0f;
             updateTestCommand(VESC_COMMAND_SET_CURRENT_BRAKE, current);
             break;
         }    

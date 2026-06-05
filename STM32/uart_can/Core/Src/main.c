@@ -23,6 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "can.h"
+#include "cmsis_os2.h"
 #include "enums.h"
 #include "libVescCan/VESC_Consts.h"
 #include "libVescCan/VESC_Convert.h"
@@ -1019,7 +1020,7 @@ void StartUartTxTask(void *argument)
     UART_CreateMessage16(&msg, FEEDBACK_TEST_MOTOR_VOLTAGE, brakeMotorStatus.voltage);
     UART_TransmitMessageDMA(&huart1, &msg);
     
-    osDelay(1000);
+    osDelay(50);
   }
   /* USER CODE END StartUartTxTask */
 }
