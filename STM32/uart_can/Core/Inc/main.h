@@ -87,6 +87,7 @@ void Error_Handler(void);
 /* USER CODE BEGIN Private defines */
 #include "can.h"
 #include "uart.h"
+#include "regulator.h"
 #include "libVescCan/VESC_Convert.h"
 #include "vesc2halcan.h"
 /* USER CODE END Private defines */

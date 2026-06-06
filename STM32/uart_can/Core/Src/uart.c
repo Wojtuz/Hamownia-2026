@@ -3,6 +3,7 @@
 #include "libVescCan/VESC_Consts.h"
 #include "stm32g4xx_hal.h"
 #include "stm32g4xx_hal_fdcan.h"
+#include <stdbool.h>
 #include <stdint.h>
 #include <sys/types.h>
 
@@ -18,9 +19,10 @@ volatile uint8_t is_transmitting2 = 0;
 extern uint8_t brakeVescID;
 extern uint8_t testVescID;
 
-extern volatile uint16_t torqueSetpoint;
-extern volatile uint16_t torqueValue;
+extern volatile float torqueSetpoint;
+extern volatile float torqueValue;
 
+extern volatile bool regulatorON;
 extern volatile bool brakeCommandActive;
 extern volatile uint8_t brakeMotorVescCommand;
 extern volatile float brakeMotorVescData;
@@ -160,8 +162,9 @@ void UART_HandleIncomingMessage(UART_HandleTypeDef *huart, FDCAN_HandleTypeDef *
          * ========================= */
         case SET_BRAKE_MOTOR_BRAKE_TORQUE:
         {
-            int16_t torque = (int32_t)((msg->data[0] << 8) | msg->data[1]);
+            float torque = (int32_t)((msg->data[0] << 8) | msg->data[1]) / 100.0f;
             torqueSetpoint = torque;
+            regulatorON = true;
             break;
         }
 
@@ -169,6 +172,7 @@ void UART_HandleIncomingMessage(UART_HandleTypeDef *huart, FDCAN_HandleTypeDef *
         {
             float current = (int32_t)((msg->data[0] << 8) | msg->data[1]) / 100.0f; // to libVescCan scaling
             updateBrakeCommand(VESC_COMMAND_SET_CURRENT_BRAKE, current);
+            regulatorON = false;
             break;
         }    
 
@@ -176,6 +180,7 @@ void UART_HandleIncomingMessage(UART_HandleTypeDef *huart, FDCAN_HandleTypeDef *
         {
             float current = (int32_t)((msg->data[0] << 8) | msg->data[1]) / 100.0f;
             updateBrakeCommand(VESC_COMMAND_SET_CURRENT, current);
+            regulatorON = false;
             break;
         }
 
@@ -183,6 +188,7 @@ void UART_HandleIncomingMessage(UART_HandleTypeDef *huart, FDCAN_HandleTypeDef *
         {
             float rpm = (int32_t)((msg->data[0] << 8) | msg->data[1]) / 1.0f;
             updateBrakeCommand(VESC_COMMAND_SET_RPM, rpm);
+            regulatorON = false;
             break;
         }
 
@@ -190,7 +196,7 @@ void UART_HandleIncomingMessage(UART_HandleTypeDef *huart, FDCAN_HandleTypeDef *
         {
             float duty = msg->data[0] / 100.0f;
             updateBrakeCommand(VESC_COMMAND_SET_DUTY, duty);
-            // CAN_TransmitVescCommand(hfdcan, brakeVescID, VESC_COMMAND_SET_DUTY, (float)duty);
+            regulatorON = false;
             break;
         }
 
@@ -199,7 +205,7 @@ void UART_HandleIncomingMessage(UART_HandleTypeDef *huart, FDCAN_HandleTypeDef *
          * ========================= */
         case SET_TEST_MOTOR_BRAKE_TORQUE:
         {
-            int16_t torque = (int16_t)((msg->data[0] << 8) | msg->data[1]);
+            //int16_t torque = (int16_t)((msg->data[0] << 8) | msg->data[1]);
             /// UNSUPPORTED
             break;
         }
@@ -230,7 +236,7 @@ void UART_HandleIncomingMessage(UART_HandleTypeDef *huart, FDCAN_HandleTypeDef *
          * ========================= */
         case CONFIG_TEST_MOTOR_FRAMES:
         {
-            uint16_t mask = (msg->data[0] << 8) | msg->data[1];
+            //uint16_t mask = (msg->data[0] << 8) | msg->data[1];
             ///UNSUPPORTED YET
             break;
         }

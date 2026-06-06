@@ -32,6 +32,7 @@
 #include "stm32g4xx_hal_gpio.h"
 #include "stm32g4xx_hal_uart.h"
 #include "vesc2halcan.h"
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -118,10 +119,11 @@ const osThreadAttr_t uartTxTask_attributes = {
 volatile uint8_t brakeVescID = 0x49;
 volatile uint8_t testVescID = 0x70;
 
-volatile uint16_t torqueSetpoint = 0;
-volatile uint16_t torqueValue = 0;
+volatile float torqueSetpoint = 0;
+volatile float torqueValue = 0;
 
 volatile bool brakeCommandActive = false;
+volatile bool regulatorON = false;
 volatile uint8_t brakeMotorVescCommand = 0;
 volatile float brakeMotorVescData = 0;
 
@@ -925,7 +927,12 @@ void StartRegulatorTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(10000);
+    if (regulatorON)
+    {
+      regulateTorquePI(torqueSetpoint, torqueValue, &brakeMotorVescData);
+      CAN_TransmitVescCommand(&hfdcan1, brakeVescID, VESC_COMMAND_SET_CURRENT_BRAKE, brakeMotorVescData);
+    }
+    osDelay(100);
   }
   /* USER CODE END StartRegulatorTask */
 }
@@ -964,8 +971,11 @@ void StartCanBrakeTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-
-    osDelay(10000);
+    if (!regulatorON)
+    {
+      CAN_TransmitVescCommand(&hfdcan1, brakeVescID, brakeMotorVescCommand, brakeMotorVescData);
+    }
+    osDelay(100);
   }
   /* USER CODE END StartCanBrakeTask */
 }
@@ -983,7 +993,6 @@ void StartCanTxTestTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    CAN_TransmitVescCommand(&hfdcan1, brakeVescID, brakeMotorVescCommand, brakeMotorVescData);
     osDelay(100);
   }
   /* USER CODE END StartCanTxTestTask */

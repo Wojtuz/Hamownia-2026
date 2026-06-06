@@ -32,6 +32,7 @@ set(MX_Application_Src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../startup_stm32g431xx.s
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/can.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/uart.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/regulator.c
 )
 
 # STM32 HAL/LL Drivers
