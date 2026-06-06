@@ -28,6 +28,7 @@
 #include "libVescCan/VESC_Consts.h"
 #include "libVescCan/VESC_Convert.h"
 #include "libVescCan/VESC_Structs.h"
+#include "regulator.h"
 #include "stm32g4xx_hal_fdcan.h"
 #include "stm32g4xx_hal_gpio.h"
 #include "stm32g4xx_hal_uart.h"
@@ -931,6 +932,10 @@ void StartRegulatorTask(void *argument)
     {
       regulateTorquePI(torqueSetpoint, torqueValue, &brakeMotorVescData);
       CAN_TransmitVescCommand(&hfdcan1, brakeVescID, VESC_COMMAND_SET_CURRENT_BRAKE, brakeMotorVescData);
+    }
+    else 
+    {
+      resetRegulatorState();
     }
     osDelay(100);
   }

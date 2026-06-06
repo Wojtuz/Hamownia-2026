@@ -3,5 +3,6 @@
 #include "main.h"
 
 void regulateTorquePI(float torqueSetPoint, float torqueValue, float * brakingAmps);
+void resetRegulatorState();
 
 #endif /* INC_REGULATOR_H_ */

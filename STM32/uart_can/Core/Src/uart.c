@@ -151,7 +151,7 @@ void UART_HandleIncomingMessage(UART_HandleTypeDef *huart, FDCAN_HandleTypeDef *
          * ========================= */
         case FEEDBACK_SENSOR_TORQUE:
         {
-            int16_t torque = (int16_t)((msg->data[0] << 8) | msg->data[1]);
+            float torque = (int16_t)((msg->data[0] << 8) | msg->data[1]) / 100.0f;
 
             torqueValue = torque;
             break;

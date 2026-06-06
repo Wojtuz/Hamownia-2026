@@ -1,10 +1,10 @@
 #include <stdint.h>
 #include "regulator.h"
 
-float regP = 1.0f;
-float regI = 1.0f;
+float regP = 5.0f;
+float regI = 0.2f;
 
-volatile float integral;
+volatile float integral = 0;
 
 void regulateTorquePI(float torqueSetPoint, float torqueValue, float * brakingAmps)
 {
@@ -16,4 +16,9 @@ void regulateTorquePI(float torqueSetPoint, float torqueValue, float * brakingAm
         output = 0.0f;
 
     *brakingAmps = output;
+}
+
+void resetRegulatorState()
+{
+    integral = 0;
 }
