@@ -3,6 +3,7 @@
 
 #include "main.h"
 #include <stdint.h>
+#include "libVescCan/VESC_Convert.h"
 
 void FDCAN_Config(FDCAN_HandleTypeDef *hfdcan);
 void CAN_TransmitOverCan(FDCAN_HandleTypeDef *hfdcan, uint32_t id, uint8_t *data, uint8_t len);
