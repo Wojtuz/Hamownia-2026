@@ -19,7 +19,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
-#include "stm32g4xx_hal_gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -61,10 +60,45 @@ SPI_HandleTypeDef hspi1;
 
 TIM_HandleTypeDef htim3;
 
-/* Definitions for defaultTask */
-osThreadId_t defaultTaskHandle;
-const osThreadAttr_t defaultTask_attributes = {
-  .name = "defaultTask",
+/* Definitions for blinkTask */
+osThreadId_t blinkTaskHandle;
+const osThreadAttr_t blinkTask_attributes = {
+  .name = "blinkTask",
+  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 128 * 4
+};
+/* Definitions for regulatorTask */
+osThreadId_t regulatorTaskHandle;
+const osThreadAttr_t regulatorTask_attributes = {
+  .name = "regulatorTask",
+  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 128 * 4
+};
+/* Definitions for uartTxTask */
+osThreadId_t uartTxTaskHandle;
+const osThreadAttr_t uartTxTask_attributes = {
+  .name = "uartTxTask",
+  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 128 * 4
+};
+/* Definitions for uartRxTask */
+osThreadId_t uartRxTaskHandle;
+const osThreadAttr_t uartRxTask_attributes = {
+  .name = "uartRxTask",
+  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 128 * 4
+};
+/* Definitions for canTxBrakeTask */
+osThreadId_t canTxBrakeTaskHandle;
+const osThreadAttr_t canTxBrakeTask_attributes = {
+  .name = "canTxBrakeTask",
+  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 128 * 4
+};
+/* Definitions for canTxTestTask */
+osThreadId_t canTxTestTaskHandle;
+const osThreadAttr_t canTxTestTask_attributes = {
+  .name = "canTxTestTask",
   .priority = (osPriority_t) osPriorityNormal,
   .stack_size = 128 * 4
 };
@@ -88,7 +122,12 @@ static void MX_ADC3_Init(void);
 static void MX_ADC4_Init(void);
 static void MX_UART5_Init(void);
 static void MX_TIM3_Init(void);
-void StartDefaultTask(void *argument);
+void StartBlinkTask(void *argument);
+void StartRegulatorTask(void *argument);
+void StartUartTxTask(void *argument);
+void StartUartRxTask(void *argument);
+void StartCanTxBrakeTask(void *argument);
+void StartCanTxTestTask(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -165,8 +204,23 @@ int main(void)
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* creation of defaultTask */
-  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+  /* creation of blinkTask */
+  blinkTaskHandle = osThreadNew(StartBlinkTask, NULL, &blinkTask_attributes);
+
+  /* creation of regulatorTask */
+  regulatorTaskHandle = osThreadNew(StartRegulatorTask, NULL, &regulatorTask_attributes);
+
+  /* creation of uartTxTask */
+  uartTxTaskHandle = osThreadNew(StartUartTxTask, NULL, &uartTxTask_attributes);
+
+  /* creation of uartRxTask */
+  uartRxTaskHandle = osThreadNew(StartUartRxTask, NULL, &uartRxTask_attributes);
+
+  /* creation of canTxBrakeTask */
+  canTxBrakeTaskHandle = osThreadNew(StartCanTxBrakeTask, NULL, &canTxBrakeTask_attributes);
+
+  /* creation of canTxTestTask */
+  canTxTestTaskHandle = osThreadNew(StartCanTxTestTask, NULL, &canTxTestTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -955,14 +1009,14 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE END 4 */
 
-/* USER CODE BEGIN Header_StartDefaultTask */
+/* USER CODE BEGIN Header_StartBlinkTask */
 /**
-  * @brief  Function implementing the defaultTask thread.
+  * @brief  Function implementing the blinkTask thread.
   * @param  argument: Not used
   * @retval None
   */
-/* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void *argument)
+/* USER CODE END Header_StartBlinkTask */
+void StartBlinkTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
@@ -972,6 +1026,96 @@ void StartDefaultTask(void *argument)
     osDelay(100);
   }
   /* USER CODE END 5 */
+}
+
+/* USER CODE BEGIN Header_StartRegulatorTask */
+/**
+* @brief Function implementing the regulatorTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartRegulatorTask */
+void StartRegulatorTask(void *argument)
+{
+  /* USER CODE BEGIN StartRegulatorTask */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END StartRegulatorTask */
+}
+
+/* USER CODE BEGIN Header_StartUartTxTask */
+/**
+* @brief Function implementing the uartTxTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartUartTxTask */
+void StartUartTxTask(void *argument)
+{
+  /* USER CODE BEGIN StartUartTxTask */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END StartUartTxTask */
+}
+
+/* USER CODE BEGIN Header_StartUartRxTask */
+/**
+* @brief Function implementing the uartRxTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartUartRxTask */
+void StartUartRxTask(void *argument)
+{
+  /* USER CODE BEGIN StartUartRxTask */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END StartUartRxTask */
+}
+
+/* USER CODE BEGIN Header_StartCanTxBrakeTask */
+/**
+* @brief Function implementing the canTxBrakeTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartCanTxBrakeTask */
+void StartCanTxBrakeTask(void *argument)
+{
+  /* USER CODE BEGIN StartCanTxBrakeTask */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END StartCanTxBrakeTask */
+}
+
+/* USER CODE BEGIN Header_StartCanTxTestTask */
+/**
+* @brief Function implementing the canTxTestTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartCanTxTestTask */
+void StartCanTxTestTask(void *argument)
+{
+  /* USER CODE BEGIN StartCanTxTestTask */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END StartCanTxTestTask */
 }
 
 /**
