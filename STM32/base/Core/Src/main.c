@@ -103,7 +103,23 @@ const osThreadAttr_t canTxTestTask_attributes = {
   .stack_size = 128 * 4
 };
 /* USER CODE BEGIN PV */
+volatile uint8_t brakeVescID = 0x49;
+volatile uint8_t testVescID = 0x70;
 
+volatile float torqueSetpoint = 0;
+volatile float torqueValue = 0;
+
+volatile bool brakeCommandActive = false;
+volatile bool regulatorON = false;
+volatile uint8_t brakeMotorVescCommand = 0;
+volatile float brakeMotorVescData = 0;
+
+volatile bool testCommandActive = false;
+volatile uint8_t testMotorVescCommand = 0;
+volatile float testMotorVescData = 0;
+
+volatile struct MotorStatus brakeMotorStatus;
+volatile struct MotorStatus testMotorStatus;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -1006,7 +1022,88 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
+{
+  if ((RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE) != RESET) {
+    FDCAN_RxHeaderTypeDef RxHeader;
+    uint8_t RxData[8];
 
+    /* Retrieve Rx messages from RX FIFO0 */
+    if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &RxHeader, RxData) != HAL_OK) {
+      Error_Handler();
+      return;
+    }
+
+    uint8_t realID = (uint8_t)RxHeader.Identifier & 0xFF;
+    if ( !(realID == brakeVescID || realID == testVescID) ) 
+    {  
+      return;  
+    }
+
+    uint8_t message = (uint8_t)((RxHeader.Identifier >> 8) & 0xFF);    
+    VESC_RawFrame rawFrame;
+
+    halcan2vesc(&rawFrame, &RxHeader, RxData);
+
+    if (realID == brakeVescID)
+    {
+      switch (message) 
+      {
+        case VESC_COMMAND_STATUS_1:
+        {
+          VESC_Status_1 status1;
+
+          VESC_convertRawToStatus1(&status1, &rawFrame);
+          //Ignore duty because who cares
+          brakeMotorStatus.speed = status1.erpm;
+          brakeMotorStatus.current = status1.current * 100.0f;
+          break;
+        }
+        case VESC_COMMAND_STATUS_5:
+        {
+          VESC_Status_5 status5;
+
+          VESC_convertRawToStatus5(&status5, &rawFrame);
+          brakeMotorStatus.voltage = status5.voltsIn * 100.0f;
+          break;
+        }
+        default:
+        {
+          break;
+        }
+      }
+    }
+    if (realID == testVescID)
+    {
+      switch (message) 
+      {
+        case VESC_COMMAND_STATUS_1:
+        {
+          VESC_Status_1 status1;
+
+          VESC_convertRawToStatus1(&status1, &rawFrame);
+          //Ignore duty because who cares
+          testMotorStatus.speed = status1.erpm;
+          testMotorStatus.current = status1.current * 100.0f;
+          break;
+        }
+        case VESC_COMMAND_STATUS_5:
+        {
+          VESC_Status_5 status5;
+
+          VESC_convertRawToStatus5(&status5, &rawFrame);
+          testMotorStatus.voltage = status5.voltsIn * 100.0f;
+          break;
+        }
+        default:
+        {
+          break;
+        }
+      }
+    }
+    
+  }
+}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartBlinkTask */
@@ -1041,7 +1138,16 @@ void StartRegulatorTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    if (regulatorON)
+    {
+      regulateTorquePI(torqueSetpoint, torqueValue, &brakeMotorVescData);
+      CAN_TransmitVescCommand(&hfdcan1, brakeVescID, VESC_COMMAND_SET_CURRENT_BRAKE, brakeMotorVescData);
+    }
+    else 
+    {
+      resetRegulatorState();
+    }
+    osDelay(100);
   }
   /* USER CODE END StartRegulatorTask */
 }
@@ -1059,7 +1165,23 @@ void StartUartTxTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    struct Message msg;
+
+    UART_CreateMessage16(&msg, FEEDBACK_BRAKE_MOTOR_SPEED, brakeMotorStatus.speed);
+    UART_TransmitMessageDMA(&huart1, &msg);
+    UART_CreateMessage16(&msg, FEEDBACK_BRAKE_MOTOR_CURRENT, brakeMotorStatus.current);
+    UART_TransmitMessageDMA(&huart1, &msg);
+    UART_CreateMessage16(&msg, FEEDBACK_BRAKE_MOTOR_VOLTAGE, brakeMotorStatus.voltage);
+    UART_TransmitMessageDMA(&huart1, &msg);
+
+    UART_CreateMessage16(&msg, FEEDBACK_TEST_MOTOR_SPEED, brakeMotorStatus.speed);
+    UART_TransmitMessageDMA(&huart1, &msg);
+    UART_CreateMessage16(&msg, FEEDBACK_TEST_MOTOR_CURRENT, brakeMotorStatus.current);
+    UART_TransmitMessageDMA(&huart1, &msg);
+    UART_CreateMessage16(&msg, FEEDBACK_TEST_MOTOR_VOLTAGE, brakeMotorStatus.voltage);
+    UART_TransmitMessageDMA(&huart1, &msg);
+    
+    osDelay(50);
   }
   /* USER CODE END StartUartTxTask */
 }
@@ -1074,10 +1196,13 @@ void StartUartTxTask(void *argument)
 void StartUartRxTask(void *argument)
 {
   /* USER CODE BEGIN StartUartRxTask */
+  /// Commands from ESP
+
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    UART_ProcessRxDmaBuffer(&huart1, &hfdcan1, &hdma_usart1_rx);
+    osDelay(10);
   }
   /* USER CODE END StartUartRxTask */
 }
@@ -1095,7 +1220,11 @@ void StartCanTxBrakeTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    if (!regulatorON)
+    {
+      CAN_TransmitVescCommand(&hfdcan1, brakeVescID, brakeMotorVescCommand, brakeMotorVescData);
+    }
+    osDelay(100);
   }
   /* USER CODE END StartCanTxBrakeTask */
 }
@@ -1113,7 +1242,11 @@ void StartCanTxTestTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    if (!regulatorON)
+    {
+      CAN_TransmitVescCommand(&hfdcan1, testVescID, testMotorVescCommand, testMotorVescData);
+    }
+    osDelay(100);
   }
   /* USER CODE END StartCanTxTestTask */
 }
