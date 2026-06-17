@@ -49,6 +49,9 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     Core/Src/vesc2halcan.c
+    Core/Src/regulator.c
+    Core/Src/uart.c
+    Core/Src/can.c
 )
 
 # Add include paths

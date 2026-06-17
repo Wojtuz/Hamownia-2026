@@ -1,5 +1,7 @@
 #include "can.h"
+#include "main.h"
 #include "stm32g4xx_hal_fdcan.h"
+#include "stm32g4xx_hal_gpio.h"
 
 void FDCAN_Config(FDCAN_HandleTypeDef *hfdcan)
 {
@@ -73,5 +75,10 @@ void CAN_TransmitVescCommand(FDCAN_HandleTypeDef *hfdcan, VESC_Id_t vescID, VESC
 
 	VESC_convertCmdToRaw(&rawFrame, &cmd);
 	vesc2halcan(&TxHeader, TxData, sizeof(TxData), &rawFrame);
-	HAL_FDCAN_AddMessageToTxFifoQ(hfdcan, &TxHeader, TxData);
+	
+	uint32_t freeLevel = HAL_FDCAN_GetTxFifoFreeLevel(hfdcan);
+
+	if (HAL_FDCAN_AddMessageToTxFifoQ(hfdcan, &TxHeader, TxData) != HAL_OK) {
+		HAL_GPIO_TogglePin(LED_ER_GPIO_Port, LED_ER_Pin);
+	}
 }
