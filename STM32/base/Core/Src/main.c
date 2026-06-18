@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+#include "stm32g4xx_hal.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -202,6 +203,10 @@ int main(void)
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
   FDCAN_Config(&hfdcan1);
+  HAL_Delay(1000);
+
+  UART_StartReceiveDMA(&huart1, &hdma_usart1_rx);
+  HAL_Delay(1000);
 
   /* USER CODE END 2 */
 
@@ -511,7 +516,7 @@ static void MX_FDCAN1_Init(void)
   hfdcan1.Instance = FDCAN1;
   hfdcan1.Init.ClockDivider = FDCAN_CLOCK_DIV1;
   hfdcan1.Init.FrameFormat = FDCAN_FRAME_CLASSIC;
-  hfdcan1.Init.Mode = FDCAN_MODE_INTERNAL_LOOPBACK;
+  hfdcan1.Init.Mode = FDCAN_MODE_NORMAL;
   hfdcan1.Init.AutoRetransmission = ENABLE;
   hfdcan1.Init.TransmitPause = ENABLE;
   hfdcan1.Init.ProtocolException = DISABLE;
@@ -1146,24 +1151,6 @@ void StartBlinkTask(void *argument)
   for(;;)
   {
     HAL_GPIO_TogglePin(LED_OK_GPIO_Port, LED_OK_Pin);
-    
-    FDCAN_TxHeaderTypeDef TxHeader;
-    uint8_t TxData[8];
-    VESC_CommandFrame cmd;
-    VESC_RawFrame rawFrame;
-
-    cmd.vescID = 0x67;
-    cmd.command = 2;
-    cmd.commandData = 0x01;
-
-    VESC_ZeroMemory(&rawFrame, sizeof(rawFrame));
-    VESC_ZeroMemory(&TxHeader, sizeof(TxHeader));
-    VESC_ZeroMemory(TxData, sizeof(TxData));
-
-    VESC_convertCmdToRaw(&rawFrame, &cmd);
-    vesc2halcan(&TxHeader, TxData, sizeof(TxData), &rawFrame);
-    HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &TxHeader, TxData);
-    
     osDelay(100);
   }
   /* USER CODE END 5 */
@@ -1224,6 +1211,7 @@ void StartUartTxTask(void *argument)
     UART_TransmitMessageDMA(&huart1, &msg);
     UART_CreateMessage16(&msg, FEEDBACK_TEST_MOTOR_VOLTAGE, brakeMotorStatus.voltage);
     UART_TransmitMessageDMA(&huart1, &msg);
+    
     
     osDelay(50);
   }
