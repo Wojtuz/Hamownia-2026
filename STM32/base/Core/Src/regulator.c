@@ -9,8 +9,11 @@ volatile float integral = 0;
 void regulateTorquePI(float torqueSetPoint, float torqueValue, float * brakingAmps)
 {
     float error = torqueSetPoint - torqueValue;
-    integral += error;
+    
     float output = regP * error + regI * integral;
+
+    if (!(output > 100.0f))
+        integral += error;
 
     if (output < 0.0f)
         output = 0.0f;

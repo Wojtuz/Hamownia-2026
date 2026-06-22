@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+#include "cmsis_os2.h"
 #include <stdint.h>
 
 /* Private includes ----------------------------------------------------------*/
@@ -130,6 +131,8 @@ volatile float testMotorVescData = 0;
 
 volatile struct MotorStatus brakeMotorStatus;
 volatile struct MotorStatus testMotorStatus;
+
+volatile bool uart_started = false;
 
 typedef struct {
     float voltage_V;
@@ -1221,11 +1224,11 @@ void StartUartTxTask(void *argument)
     UART_CreateMessage16(&msg, FEEDBACK_BRAKE_MOTOR_VOLTAGE, brakeMotorStatus.voltage);
     UART_TransmitMessageDMA(&huart1, &msg);
 
-    UART_CreateMessage16(&msg, FEEDBACK_TEST_MOTOR_SPEED, brakeMotorStatus.speed);
+    UART_CreateMessage16(&msg, FEEDBACK_TEST_MOTOR_SPEED, testMotorStatus.speed);
     UART_TransmitMessageDMA(&huart1, &msg);
-    UART_CreateMessage16(&msg, FEEDBACK_TEST_MOTOR_CURRENT, brakeMotorStatus.current);
+    UART_CreateMessage16(&msg, FEEDBACK_TEST_MOTOR_CURRENT, testMotorStatus.current);
     UART_TransmitMessageDMA(&huart1, &msg);
-    UART_CreateMessage16(&msg, FEEDBACK_TEST_MOTOR_VOLTAGE, brakeMotorStatus.voltage);
+    UART_CreateMessage16(&msg, FEEDBACK_TEST_MOTOR_VOLTAGE, testMotorStatus.voltage);
     UART_TransmitMessageDMA(&huart1, &msg);
     
     
@@ -1267,6 +1270,11 @@ void StartUartRxTask(void *argument)
 void StartCanTxBrakeTask(void *argument)
 {
   /* USER CODE BEGIN StartCanTxBrakeTask */
+  while(!uart_started)
+  {
+    osDelay(1);
+  }
+  
   /* Infinite loop */
   for(;;)
   {
@@ -1289,13 +1297,16 @@ void StartCanTxBrakeTask(void *argument)
 void StartCanTxTestTask(void *argument)
 {
   /* USER CODE BEGIN StartCanTxTestTask */
+  while(!uart_started)
+  {
+    osDelay(1);
+  }
+  
   /* Infinite loop */
   for(;;)
   {
-    if (!regulatorON)
-    {
-      CAN_TransmitVescCommand(&hfdcan1, testVescID, testMotorVescCommand, testMotorVescData);
-    }
+    //Tested motor has to work no matter what brake motor is doing
+    CAN_TransmitVescCommand(&hfdcan1, testVescID, testMotorVescCommand, testMotorVescData);
     osDelay(100);
   }
   /* USER CODE END StartCanTxTestTask */
