@@ -31,6 +31,8 @@ extern volatile bool testCommandActive;
 extern volatile uint8_t testMotorVescCommand;
 extern volatile float testMotorVescData;
 
+extern volatile bool uart_started;
+
 static uint16_t getBufferPos(uint16_t position, uint16_t buffer_size)
 {
     return position % buffer_size;
@@ -144,6 +146,7 @@ void updateTestCommand(uint8_t TestMotorVescCommand, float value)
 
 void UART_HandleIncomingMessage(UART_HandleTypeDef *huart, FDCAN_HandleTypeDef *hfdcan, struct Message *msg)
 {
+    uart_started = true;
     switch (msg->ID)
     {
         /* =========================
