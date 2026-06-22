@@ -52,6 +52,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Core/Src/regulator.c
     Core/Src/uart.c
     Core/Src/can.c
+    Core/Src/ina237.c
 )
 
 # Add include paths

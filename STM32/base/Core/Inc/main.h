@@ -124,6 +124,7 @@ void Error_Handler(void);
 #include "regulator.h"
 #include "libVescCan/VESC_Convert.h"
 #include "vesc2halcan.h"
+#include "ina237.h"
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

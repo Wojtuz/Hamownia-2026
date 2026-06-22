@@ -19,7 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
-#include "stm32g4xx_hal.h"
+#include <stdint.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -105,9 +105,16 @@ const osThreadAttr_t canTxTestTask_attributes = {
   .priority = (osPriority_t) osPriorityNormal,
   .stack_size = 128 * 4
 };
+/* Definitions for inaTask */
+osThreadId_t inaTaskHandle;
+const osThreadAttr_t inaTask_attributes = {
+  .name = "inaTask",
+  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 128 * 4
+};
 /* USER CODE BEGIN PV */
 volatile uint8_t brakeVescID = 0x49;
-volatile uint8_t testVescID = 0x70;
+volatile uint8_t testVescID = 0x52;
 
 volatile float torqueSetpoint = 0;
 volatile float torqueValue = 0;
@@ -123,6 +130,14 @@ volatile float testMotorVescData = 0;
 
 volatile struct MotorStatus brakeMotorStatus;
 volatile struct MotorStatus testMotorStatus;
+
+typedef struct {
+    float voltage_V;
+    float current_A;
+} INA237_Data_t;
+
+volatile INA237_Data_t ina1_data;
+volatile INA237_Data_t ina2_data;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -148,6 +163,7 @@ void StartUartTxTask(void *argument);
 void StartUartRxTask(void *argument);
 void StartCanTxBrakeTask(void *argument);
 void StartCanTxTestTask(void *argument);
+void StartInaTask(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -205,9 +221,6 @@ int main(void)
   FDCAN_Config(&hfdcan1);
   HAL_Delay(1000);
 
-  UART_StartReceiveDMA(&huart1, &hdma_usart1_rx);
-  HAL_Delay(1000);
-
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -247,6 +260,9 @@ int main(void)
 
   /* creation of canTxTestTask */
   canTxTestTaskHandle = osThreadNew(StartCanTxTestTask, NULL, &canTxTestTask_attributes);
+
+  /* creation of inaTask */
+  inaTaskHandle = osThreadNew(StartInaTask, NULL, &inaTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -518,7 +534,7 @@ static void MX_FDCAN1_Init(void)
   hfdcan1.Init.FrameFormat = FDCAN_FRAME_CLASSIC;
   hfdcan1.Init.Mode = FDCAN_MODE_NORMAL;
   hfdcan1.Init.AutoRetransmission = ENABLE;
-  hfdcan1.Init.TransmitPause = ENABLE;
+  hfdcan1.Init.TransmitPause = DISABLE;
   hfdcan1.Init.ProtocolException = DISABLE;
   hfdcan1.Init.NominalPrescaler = 2;
   hfdcan1.Init.NominalSyncJumpWidth = 12;
@@ -1229,7 +1245,9 @@ void StartUartRxTask(void *argument)
 {
   /* USER CODE BEGIN StartUartRxTask */
   /// Commands from ESP
-
+  UART_StartReceiveDMA(&huart1, &hdma_usart1_rx);
+  HAL_Delay(1000);
+  
   /* Infinite loop */
   for(;;)
   {
@@ -1283,12 +1301,33 @@ void StartCanTxTestTask(void *argument)
   /* USER CODE END StartCanTxTestTask */
 }
 
+/* USER CODE BEGIN Header_StartInaTask */
+/**
+* @brief Function implementing the inaTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartInaTask */
+void StartInaTask(void *argument)
+{
+  /* USER CODE BEGIN StartInaTask */
+
+  INA237_InitDevice(0x44);
+  /* Infinite loop */
+  for(;;)
+  {
+    uint16_t temp = INA237_ReadRegister(0x44, 0x3e);
+    osDelay(100);
+  }
+  /* USER CODE END StartInaTask */
+}
+
 /**
   * @brief  Period elapsed callback in non blocking mode
   * @note   This function is called  when TIM1 interrupt took place, inside
   * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
   * a global variable "uwTick" used as application time base.
-  * @param  htim : TIM handle
+  * @param  htim : TIM handle, &hi2c1
   * @retval None
   */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
