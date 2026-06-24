@@ -1,8 +1,8 @@
 #include <stdint.h>
 #include "regulator.h"
 
-float regP = 5.0f;
-float regI = 0.2f;
+float regP = 2.0f;
+float regI = 0.1f;
 
 volatile float integral = 0;
 

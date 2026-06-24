@@ -144,6 +144,11 @@ void updateTestCommand(uint8_t TestMotorVescCommand, float value)
     testCommandActive = true;
 }
 
+void UART_RetransmitMessage(UART_HandleTypeDef *huart, struct Message *msg)
+{
+    UART_TransmitMessageDMA(huart, msg);
+}
+
 void UART_HandleIncomingMessage(UART_HandleTypeDef *huart, FDCAN_HandleTypeDef *hfdcan, struct Message *msg)
 {
     uart_started = true;
@@ -155,7 +160,7 @@ void UART_HandleIncomingMessage(UART_HandleTypeDef *huart, FDCAN_HandleTypeDef *
         case FEEDBACK_SENSOR_TORQUE:
         {
             float torque = (int16_t)((msg->data[0] << 8) | msg->data[1]) / 100.0f;
-
+            
             torqueValue = torque;
             break;
         }
@@ -168,6 +173,7 @@ void UART_HandleIncomingMessage(UART_HandleTypeDef *huart, FDCAN_HandleTypeDef *
             float torque = (int32_t)((msg->data[0] << 8) | msg->data[1]) / 100.0f;
             torqueSetpoint = torque;
             regulatorON = true;
+            UART_RetransmitMessage(huart, msg);
             break;
         }
 
@@ -176,6 +182,7 @@ void UART_HandleIncomingMessage(UART_HandleTypeDef *huart, FDCAN_HandleTypeDef *
             float current = (int32_t)((msg->data[0] << 8) | msg->data[1]) / 100.0f; // to libVescCan scaling
             updateBrakeCommand(VESC_COMMAND_SET_CURRENT_BRAKE, current);
             regulatorON = false;
+            UART_RetransmitMessage(huart, msg);
             break;
         }    
 
@@ -184,6 +191,7 @@ void UART_HandleIncomingMessage(UART_HandleTypeDef *huart, FDCAN_HandleTypeDef *
             float current = (int32_t)((msg->data[0] << 8) | msg->data[1]) / 100.0f;
             updateBrakeCommand(VESC_COMMAND_SET_CURRENT, current);
             regulatorON = false;
+            UART_RetransmitMessage(huart, msg);
             break;
         }
 
@@ -192,6 +200,7 @@ void UART_HandleIncomingMessage(UART_HandleTypeDef *huart, FDCAN_HandleTypeDef *
             float rpm = (int32_t)((msg->data[0] << 8) | msg->data[1]) / 1.0f;
             updateBrakeCommand(VESC_COMMAND_SET_RPM, rpm);
             regulatorON = false;
+            UART_RetransmitMessage(huart, msg);
             break;
         }
 
@@ -200,6 +209,7 @@ void UART_HandleIncomingMessage(UART_HandleTypeDef *huart, FDCAN_HandleTypeDef *
             float duty = msg->data[0] / 100.0f;
             updateBrakeCommand(VESC_COMMAND_SET_DUTY, duty);
             regulatorON = false;
+            UART_RetransmitMessage(huart, msg);
             break;
         }
 
@@ -217,6 +227,7 @@ void UART_HandleIncomingMessage(UART_HandleTypeDef *huart, FDCAN_HandleTypeDef *
         {
             float current = (int16_t)((msg->data[0] << 8) | msg->data[1]) / 100.0f;
             updateTestCommand(VESC_COMMAND_SET_CURRENT_BRAKE, current);
+            UART_RetransmitMessage(huart, msg);
             break;
         }    
 
@@ -224,6 +235,8 @@ void UART_HandleIncomingMessage(UART_HandleTypeDef *huart, FDCAN_HandleTypeDef *
         {
             float current = (int32_t)((msg->data[0] << 8) | msg->data[1]) / 100.0f;
             updateTestCommand(VESC_COMMAND_SET_CURRENT, current);
+            UART_RetransmitMessage(huart, msg);
+
             break;
         }
 
@@ -231,6 +244,7 @@ void UART_HandleIncomingMessage(UART_HandleTypeDef *huart, FDCAN_HandleTypeDef *
         {
             float rpm = (int32_t)((msg->data[0] << 8) | msg->data[1]);
             updateTestCommand(VESC_COMMAND_SET_RPM, rpm);
+            UART_RetransmitMessage(huart, msg);
             break;
         }
 
