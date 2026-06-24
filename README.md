@@ -97,17 +97,13 @@ AA 01 10 20
 | 0xA1 | SET_TEST_MOTOR_BRAKE_CURRENT     | 2           | 100 = 1 A         | Ustawienie prądu hamowania          | Web -> ESP B -> STM32 -> DRV      |
 | 0xA2 | SET_TEST_MOTOR_BRAKE_TORQUE      | 2           | 100 = 1 Nm        | Ustawienie momentu hamowania (PID)  | Web -> ESP B -> STM32 -> DRV      |
 | 0xA3 | SET_TEST_MOTOR_DRIVE_CURRENT     | 2           | 10 = 1 A          | Ustawienie prądu hamowania          | Web -> ESP B -> STM32 -> DRV      |
-| 0xA4 | SET_TEST_MOTOR_SPEED             | 2           | 1 = 1 rpm         | Ustawienie momentu hamowania (PID)  | Web -> ESP B -> STM32 -> DRV      |
+| 0xA4 | SET_TEST_MOTOR_SPEED             | 2           | 1 = 1 rpm         | Ustawienie prędkości silnika        | Web -> ESP B -> STM32 -> DRV      |
+| 0x65 | SET_TEST_MOTOR_DUTY              | 1           | 1 = 1%            | Ustawienie wypełnienia sterowania   | Web -> ESP B -> STM32 -> DRV      |
 | 0xC1 | GENERAL_WEB_STOP                 | 1           | web_estop_enum    | Zatrzymanie awaryjne przez web      | Web -> ESP B -> STM32             |
 | 0xC2 | GENERAL_BASE_STOP                | 1           | base_estop_enum   | Zatrzymanie awaryjne przez baze     | Base -> ESP B -> Web              |
+| 0xE0 | NEW_CAN_ID                       | 1           | np. 0x70          | Nieobsłużone CANID na szynie        | STM32 -> ESP B -> Web             |
 | 0xF0 | CONFIG_TEST_MOTOR_FRAMES         | 2           | motor_frames_enum | Ramki które obsługuje silnik badany | Web -> ESP B -> STM32             |
 | 0xF1 | CONFIG_TEST_MOTOR_CAN_ID         | 1           | np. 0x70          | Adres CAN silnika badanego          | Web -> ESP B -> STM32             |
-
-`0x0X → płytka czujnikowa`
-`0x4X → silnik hamujący → VESC`
-`0x8X → silnik badany → DRV`
-`0xCX → ogólne`
-`0xFX → konfiguracja silnika badanego`
 
 
 
