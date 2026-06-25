@@ -20,6 +20,9 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "cmsis_os2.h"
+#include "enums.h"
+#include "libVescCan/VESC_Consts.h"
+#include "stm32g4xx_hal_gpio.h"
 #include <stdint.h>
 
 /* Private includes ----------------------------------------------------------*/
@@ -114,8 +117,10 @@ const osThreadAttr_t inaTask_attributes = {
   .stack_size = 128 * 4
 };
 /* USER CODE BEGIN PV */
-volatile uint8_t brakeVescID = 0x49;
-volatile uint8_t testVescID = 0x52;
+volatile uint8_t brakeVescID = 0x31;
+volatile uint8_t testVescID = 0x85;
+
+volatile uint8_t newVescID = 0x00;
 
 volatile float torqueSetpoint = 0;
 volatile float torqueValue = 0;
@@ -1086,8 +1091,13 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 
     uint8_t realID = (uint8_t)RxHeader.Identifier & 0xFF;
     if ( !(realID == brakeVescID || realID == testVescID) ) 
-    {  
-      return;  
+    { 
+      newVescID = realID;
+      return;
+    }
+    else 
+    {
+      newVescID = 0x00;
     }
 
     uint8_t message = (uint8_t)((RxHeader.Identifier >> 8) & 0xFF);    
@@ -1123,7 +1133,7 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
         }
       }
     }
-    if (realID == testVescID)
+    else if (realID == testVescID)
     {
       switch (message) 
       {
@@ -1191,7 +1201,17 @@ void StartRegulatorTask(void *argument)
     if (regulatorON)
     {
       regulateTorquePI(torqueSetpoint, torqueValue, &brakeMotorVescData);
-      CAN_TransmitVescCommand(&hfdcan1, brakeVescID, VESC_COMMAND_SET_CURRENT_BRAKE, brakeMotorVescData);
+      if (brakeMotorVescData < 0)
+      {
+        brakeMotorVescCommand = VESC_COMMAND_SET_CURRENT;
+        brakeMotorVescData = -brakeMotorVescData;
+      }
+      else 
+      {
+        brakeMotorVescCommand = VESC_COMMAND_SET_CURRENT_BRAKE;
+      }
+
+      CAN_TransmitVescCommand(&hfdcan1, brakeVescID, brakeMotorVescCommand, brakeMotorVescData);
     }
     else 
     {
@@ -1231,6 +1251,11 @@ void StartUartTxTask(void *argument)
     UART_CreateMessage16(&msg, FEEDBACK_TEST_MOTOR_VOLTAGE, testMotorStatus.voltage);
     UART_TransmitMessageDMA(&huart1, &msg);
     
+    if (newVescID != 0x00)
+    {
+      UART_CreateMessage8(&msg, NEW_CAN_ID, newVescID);
+      UART_TransmitMessageDMA(&huart1, &msg);
+    }
     
     osDelay(50);
   }
@@ -1322,7 +1347,37 @@ void StartCanTxTestTask(void *argument)
 void StartInaTask(void *argument)
 {
   /* USER CODE BEGIN StartInaTask */
+  osDelay(500); 
+  while(1==1)
+  {
+    osDelay(100);
+  }
+  volatile uint8_t found_address = 0;
+  HAL_StatusTypeDef result;
+  
+  // Przeszukujemy adresy 7-bitowe od 1 do 127
+  for (uint8_t i = 1; i < 128; i++)
+  {
+      // HAL wymaga adresu przesuniętego w lewo (8-bitowego)
+      // Używamy funkcji HAL_I2C_IsDeviceReady, która wysyła tylko adres i czeka na ACK
+      result = HAL_I2C_IsDeviceReady(&hi2c1, (i << 1), 3, 5);
+      
+      if (result == HAL_OK)
+      {
+          found_address = i;
+          if (found_address == 120)
+          {
+            HAL_GPIO_TogglePin(LED_OK_GPIO_Port, LED_ER_Pin);
+          }
+          // Tutaj możesz postawić Breakpoint w debuggerze!
+          // Jeśli program tu wejdzie, 'found_address' pokaże Twój czysty, 7-bitowy adres.
+          
+          // Opcjonalnie: jeśli masz podpiętych kilka układów, nie przerywaj pętli (usuń break)
+          break; 
+      }
+  }
 
+  osDelay(1000);
   INA237_InitDevice(0x44);
   /* Infinite loop */
   for(;;)

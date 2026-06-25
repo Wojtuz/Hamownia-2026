@@ -79,6 +79,6 @@ void CAN_TransmitVescCommand(FDCAN_HandleTypeDef *hfdcan, VESC_Id_t vescID, VESC
 	uint32_t freeLevel = HAL_FDCAN_GetTxFifoFreeLevel(hfdcan);
 
 	if (HAL_FDCAN_AddMessageToTxFifoQ(hfdcan, &TxHeader, TxData) != HAL_OK) {
-		HAL_GPIO_TogglePin(LED_ER_GPIO_Port, LED_ER_Pin);
+		HAL_GPIO_WritePin(LED_ER_GPIO_Port, LED_ER_Pin, GPIO_PIN_SET);
 	}
 }

@@ -52,6 +52,9 @@ typedef enum
     GENERAL_WEB_STOP                     = 0xC1,
     GENERAL_BASE_STOP                    = 0xC2,
 
+    // Random
+    NEW_CAN_ID                           = 0xE0,
+
     /* Configuration */
     CONFIG_TEST_MOTOR_FRAMES             = 0xF0,
     CONFIG_TEST_MOTOR_CAN_ID             = 0xF1
@@ -99,6 +102,9 @@ static inline uint8_t getMessageSize(MsgID id)
         /* General */
         case GENERAL_WEB_STOP:                    return 1;
         case GENERAL_BASE_STOP:                   return 1;
+
+        // Random
+        case NEW_CAN_ID:                          return 1;
 
         /* Config */
         case CONFIG_TEST_MOTOR_FRAMES:            return 2;

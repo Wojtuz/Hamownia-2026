@@ -15,8 +15,8 @@ void regulateTorquePI(float torqueSetPoint, float torqueValue, float * brakingAm
     if (!(output > 100.0f))
         integral += error;
 
-    if (output < 0.0f)
-        output = 0.0f;
+    if (output < -100.0f)
+        output = -100.0f;
 
     *brakingAmps = output;
 }
