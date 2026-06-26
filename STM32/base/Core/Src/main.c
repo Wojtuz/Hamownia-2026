@@ -1203,12 +1203,12 @@ void StartRegulatorTask(void *argument)
       regulateTorquePI(torqueSetpoint, torqueValue, &brakeMotorVescData);
       if (brakeMotorVescData < 0)
       {
-        brakeMotorVescCommand = VESC_COMMAND_SET_CURRENT;
-        brakeMotorVescData = -brakeMotorVescData;
+        brakeMotorVescCommand = VESC_COMMAND_SET_CURRENT_BRAKE;
       }
       else 
       {
-        brakeMotorVescCommand = VESC_COMMAND_SET_CURRENT_BRAKE;
+        brakeMotorVescCommand = VESC_COMMAND_SET_CURRENT;
+        brakeMotorVescData = -brakeMotorVescData;
       }
 
       CAN_TransmitVescCommand(&hfdcan1, brakeVescID, brakeMotorVescCommand, brakeMotorVescData);

@@ -1,8 +1,8 @@
 #include <stdint.h>
 #include "regulator.h"
 
-float regP = 2.0f;
-float regI = 0.1f;
+float regP = 0.02f;
+float regI = 0.01f;
 
 volatile float integral = 0;
 
@@ -12,11 +12,11 @@ void regulateTorquePI(float torqueSetPoint, float torqueValue, float * brakingAm
     
     float output = regP * error + regI * integral;
 
-    if (!(output > 100.0f))
+    if (!(error > 0 && integral > 100.0f))
         integral += error;
-
-    if (output < -100.0f)
-        output = -100.0f;
+    
+    if (!(error < 0 && integral < -100.0f))
+        integral += error;
 
     *brakingAmps = output;
 }
