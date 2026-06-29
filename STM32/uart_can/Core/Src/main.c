@@ -117,8 +117,8 @@ const osThreadAttr_t uartTxTask_attributes = {
 };
 /* USER CODE BEGIN PV */
 
-volatile uint8_t brakeVescID = 0x49;
-volatile uint8_t testVescID = 0x70;
+volatile uint8_t brakeVescID = 0x31;
+volatile uint8_t testVescID = 0x85;
 
 volatile float torqueSetpoint = 0;
 volatile float torqueValue = 0;
@@ -134,6 +134,8 @@ volatile float testMotorVescData = 0;
 
 volatile struct MotorStatus brakeMotorStatus;
 volatile struct MotorStatus testMotorStatus;
+
+volatile bool uart_started = false;
 
 /* USER CODE END PV */
 
@@ -931,13 +933,23 @@ void StartRegulatorTask(void *argument)
     if (regulatorON)
     {
       regulateTorquePI(torqueSetpoint, torqueValue, &brakeMotorVescData);
-      CAN_TransmitVescCommand(&hfdcan1, brakeVescID, VESC_COMMAND_SET_CURRENT_BRAKE, brakeMotorVescData);
+      if (brakeMotorVescData > 0)
+      {
+        brakeMotorVescCommand = VESC_COMMAND_SET_CURRENT_BRAKE;
+      }
+      else 
+      {
+        brakeMotorVescCommand = VESC_COMMAND_SET_CURRENT;
+        brakeMotorVescData = -brakeMotorVescData;
+      }
+
+      CAN_TransmitVescCommand(&hfdcan1, brakeVescID, brakeMotorVescCommand, brakeMotorVescData);
     }
     else 
     {
       resetRegulatorState();
     }
-    osDelay(100);
+    osDelay(10);
   }
   /* USER CODE END StartRegulatorTask */
 }
@@ -974,11 +986,16 @@ void StartCanBrakeTask(void *argument)
 {
   /* USER CODE BEGIN StartCanBrakeTask */
   /* Infinite loop */
+  while (!uart_started)
+  {
+    osDelay(1000);
+  }
+  
   for(;;)
   {
     if (!regulatorON)
     {
-      CAN_TransmitVescCommand(&hfdcan1, brakeVescID, brakeMotorVescCommand, brakeMotorVescData);
+      //CAN_TransmitVescCommand(&hfdcan1, brakeVescID, brakeMotorVescCommand, brakeMotorVescData);
     }
     osDelay(100);
   }
@@ -998,6 +1015,12 @@ void StartCanTxTestTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
+    // Poprawnie przeportowana obsługa drugiego silnika z nowej płytki
+    if(testCommandActive)
+    {
+        CAN_TransmitVescCommand(&hfdcan1, testVescID, testMotorVescCommand, testMotorVescData);
+        //testCommandActive = false;
+    }
     osDelay(100);
   }
   /* USER CODE END StartCanTxTestTask */
@@ -1027,11 +1050,11 @@ void StartUartTxTask(void *argument)
     UART_CreateMessage16(&msg, FEEDBACK_BRAKE_MOTOR_VOLTAGE, brakeMotorStatus.voltage);
     UART_TransmitMessageDMA(&huart1, &msg);
 
-    UART_CreateMessage16(&msg, FEEDBACK_TEST_MOTOR_SPEED, brakeMotorStatus.speed);
+    UART_CreateMessage16(&msg, FEEDBACK_TEST_MOTOR_SPEED, testMotorStatus.speed);
     UART_TransmitMessageDMA(&huart1, &msg);
-    UART_CreateMessage16(&msg, FEEDBACK_TEST_MOTOR_CURRENT, brakeMotorStatus.current);
+    UART_CreateMessage16(&msg, FEEDBACK_TEST_MOTOR_CURRENT, testMotorStatus.current);
     UART_TransmitMessageDMA(&huart1, &msg);
-    UART_CreateMessage16(&msg, FEEDBACK_TEST_MOTOR_VOLTAGE, brakeMotorStatus.voltage);
+    UART_CreateMessage16(&msg, FEEDBACK_TEST_MOTOR_VOLTAGE, testMotorStatus.voltage);
     UART_TransmitMessageDMA(&huart1, &msg);
     
     osDelay(50);
